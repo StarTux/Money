@@ -1,0 +1,24 @@
+name: Money
+description: Money management
+author: StarTux
+version: 0.1
+api-version: 1.13
+website: http://cavetale.com
+main: com.cavetale.money.MoneyPlugin
+depend: [ SQL, PlayerCache, GenericEvents ]
+softdepend: []
+commands:
+  money:
+    aliases: []
+    description: money
+    permission: money.money
+    usage: |-
+      Usage:
+      /money - Check your bank account
+permissions:
+  money.money:
+    description: use /money
+    default: op
+  money.admin:
+    description: Use admin commands
+    default: op
