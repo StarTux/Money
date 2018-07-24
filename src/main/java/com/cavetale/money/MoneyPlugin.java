@@ -5,6 +5,9 @@ import com.winthier.generic_events.PlayerBalanceEvent;
 import com.winthier.generic_events.TakePlayerMoneyEvent;
 import com.winthier.playercache.PlayerCache;
 import com.winthier.sql.SQLDatabase;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -20,7 +23,7 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         db = new SQLDatabase(this);
-        db.registerTables(SQLAccount.class);
+        db.registerTables(SQLAccount.class, SQLLog.class);
         db.createAllTables();
         getServer().getPluginManager().registerEvents(this, this);
     }
@@ -79,6 +82,7 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
                     return true;
                 }
                 giveMoney(owner, amount);
+                db.save(new SQLLog(owner, amount, this, sender.getName() + " " + args[0] + " " + args[1] + " " + args[2]));
                 amount = getMoney(owner);
                 sender.sendMessage(String.format("Balance of %s is now %s.", args[1], formatMoney(amount)));
                 return true;
@@ -103,10 +107,83 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
                     return true;
                 }
                 if (takeMoney(owner, amount)) {
+                    db.save(new SQLLog(owner, -amount, this, sender.getName() + " " + args[0] + " " + args[1] + " " + args[2]));
                     amount = getMoney(owner);
                     sender.sendMessage(String.format("Balance of %s is now %s.", args[1], formatMoney(amount)));
                 } else {
                     sender.sendMessage(String.format("%s could not be charged %s. Make sure the account exists and has enough money.", args[1], formatMoney(amount)));
+                }
+                return true;
+            }
+            break;
+        case "top":
+            if (args.length == 1 || args.length == 2) {
+                int page = 1;
+                if (args.length >= 2) {
+                    try {
+                        page = Integer.parseInt(args[1]);
+                    } catch (NumberFormatException nfe) {
+                        page = -1;
+                    }
+                }
+                if (page < 1) {
+                    sender.sendMessage("Invalid page number: " + args[1]);
+                    return true;
+                }
+                int offset = (page - 1) * 10;
+                List<SQLAccount> top = db.find(SQLAccount.class).orderByDescending("money").limit(10).offset(offset).findList();
+                if (top.isEmpty()) {
+                    sender.sendMessage(ChatColor.RED + "Rich list page " + page + " is empty.");
+                    return true;
+                }
+                sender.sendMessage(ChatColor.GREEN + "Rich list page " + page);
+                int i = 0;
+                for (SQLAccount row: top) {
+                    i += 1;
+                    sender.sendMessage(" " + ChatColor.DARK_GREEN + (offset + i) + ") " + ChatColor.GREEN + formatMoneyMono(row.getMoney()) + ChatColor.WHITE + " " + PlayerCache.nameForUuid(row.getOwner()));
+                }
+                return true;
+            }
+            break;
+        case "log":
+            if (args.length >= 1 || args.length <= 3) {
+                UUID target = null;
+                String targetName = null;
+                if (args.length >= 3 && sender.hasPermission("money.admin")) {
+                    target = PlayerCache.uuidForName(args[2]);
+                    targetName = args[2];
+                    if (target == null) {
+                        sender.sendMessage("Unknown bank account: " + args[2]);
+                        return true;
+                    }
+                } else if (player != null) {
+                    target = player.getUniqueId();
+                    targetName = player.getName();
+                }
+                if (target == null) return false;
+                int page = 1;
+                if (args.length >= 2) {
+                    try {
+                        page = Integer.parseInt(args[1]);
+                    } catch (NumberFormatException nfe) {
+                        page = -1;
+                    }
+                }
+                if (page < 1) {
+                    sender.sendMessage("Invalid page number: " + args[1]);
+                    return true;
+                }
+                int offset = (page - 1) * 10;
+                List<SQLLog> logs = db.find(SQLLog.class).eq("owner", target).orderByDescending("time").limit(10).offset(offset).findList();
+                if (logs.isEmpty()) {
+                    sender.sendMessage(ChatColor.RED + targetName + " bank statement page " + page + " is empty.");
+                    return true;
+                }
+                sender.sendMessage(ChatColor.GREEN + targetName + " bank statement page " + page);
+                for (SQLLog log: logs) {
+                    String comment = log.getComment();
+                    if (comment == null) comment = "N/A";
+                    sender.sendMessage("" + ChatColor.DARK_GREEN + formatDate(log.getTime()) + " " + ChatColor.GREEN + formatMoneyMono(log.getMoney()) + " " + ChatColor.GRAY + comment);
                 }
                 return true;
             }
@@ -131,6 +208,22 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
         }
         sb.append(" Kitty Coins");
         return sb.toString();
+    }
+
+    public String formatMoneyMono(double amount) {
+        String[] toks = String.format("%.02f", amount).split("\\.", 2);
+        StringBuilder sb = new StringBuilder();
+        int len = toks[0].length();
+        for (int i = 0; i < len; i += 1) {
+            if (i > 0 && i % 3 == 0) sb.insert(0, ",");
+            sb.insert(0, toks[0].charAt(len - i - 1));
+        }
+        sb.append(".").append(toks[1]);
+        return sb.toString();
+    }
+
+    public String formatDate(Date date) {
+        return new SimpleDateFormat("YY/MMM/dd HH:mm").format(date);
     }
 
     public double getMoney(UUID owner) {
@@ -191,11 +284,13 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
     void onGivePlayerMoney(GivePlayerMoneyEvent event) {
         giveMoney(event.getPlayerId(), event.getAmount());
         event.setSuccessful(true);
+        db.save(new SQLLog(event.getPlayerId(), event.getAmount(), event.getIssuingPlugin(), event.getComment()));
     }
 
     @EventHandler
     void onTakePlayerMoney(TakePlayerMoneyEvent event) {
         boolean res = takeMoney(event.getPlayerId(), event.getAmount());
         event.setSuccessful(res);
+        db.save(new SQLLog(event.getPlayerId(), -event.getAmount(), event.getIssuingPlugin(), event.getComment()));
     }
 }
