@@ -1,5 +1,6 @@
 package com.cavetale.money;
 
+import com.winthier.generic_events.FormatMoneyEvent;
 import com.winthier.generic_events.GivePlayerMoneyEvent;
 import com.winthier.generic_events.PlayerBalanceEvent;
 import com.winthier.generic_events.TakePlayerMoneyEvent;
@@ -292,5 +293,10 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
         boolean res = takeMoney(event.getPlayerId(), event.getAmount());
         event.setSuccessful(res);
         db.save(new SQLLog(event.getPlayerId(), -event.getAmount(), event.getIssuingPlugin(), event.getComment()));
+    }
+
+    @EventHandler
+    void onFormatMoney(FormatMoneyEvent event) {
+        event.setFormat(formatMoney(event.getMoney()));
     }
 }
