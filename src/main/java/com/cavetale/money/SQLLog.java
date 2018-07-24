@@ -11,9 +11,9 @@ import org.bukkit.plugin.Plugin;
 @Data @Table(name = "logs")
 public final class SQLLog {
     @Id private Integer id;
-    private Date time;
-    private UUID owner;
-    private Double money;
+    @Column(nullable = false) private Date time;
+    @Column(nullable = false) private UUID owner;
+    @Column(nullable = false) private Double money;
     private String plugin;
     private String comment;
 
