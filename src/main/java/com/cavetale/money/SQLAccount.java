@@ -7,7 +7,8 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import lombok.Data;
 
-@Data @Table(name = "accounts", uniqueConstraints = @UniqueConstraint(columnNames = { "owner" }))
+@Data @Table(name = "accounts",
+             uniqueConstraints = @UniqueConstraint(columnNames = { "owner" }))
 public final class SQLAccount {
     @Id private Integer id;
     @Column(nullable = false) private UUID owner;
