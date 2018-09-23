@@ -1,6 +1,7 @@
 package com.cavetale.money;
 
 import com.winthier.generic_events.FormatMoneyEvent;
+import com.winthier.generic_events.GenericEvents;
 import com.winthier.generic_events.GivePlayerMoneyEvent;
 import com.winthier.generic_events.PlayerBalanceEvent;
 import com.winthier.generic_events.TakePlayerMoneyEvent;
@@ -190,6 +191,14 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
             }
             break;
         default:
+            if (args.length == 1 && sender.hasPermission("money.admin")) {
+                UUID target = GenericEvents.cachedPlayerUuid(args[0]);
+                if (target == null) return false;
+                double money = getMoney(target);
+                String format = formatMoney(money);
+                sender.sendMessage(String.format("%s has %s.", args[0], format));
+                return true;
+            }
             break;
         }
         return false;
