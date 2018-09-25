@@ -8,10 +8,17 @@ import com.winthier.generic_events.TakePlayerMoneyEvent;
 import com.winthier.playercache.PlayerCache;
 import com.winthier.sql.SQLDatabase;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import org.bukkit.ChatColor;
+import java.util.stream.Collectors;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -35,9 +42,7 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
         Player player = sender instanceof Player ? (Player)sender : null;
         if (args.length == 0) {
             if (player == null) return false;
-            double money = getMoney(player.getUniqueId());
-            String format = formatMoney(money);
-            player.sendMessage(ChatColor.GREEN + String.format("You have %s.", format));
+            moneyInfo(player);
             return true;
         }
         switch (args[0]) {
@@ -190,6 +195,55 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
                 return true;
             }
             break;
+        case "send":
+            if (player == null) {
+                sender.sendMessage("Player expected");
+                return true;
+            }
+            if (args.length == 3) {
+                String argTarget = args[1];
+                String argAmount = args[2];
+                UUID target = GenericEvents.cachedPlayerUuid(argTarget);
+                if (target == null) {
+                    player.sendMessage(ChatColor.RED + "Player not found: " + argTarget);
+                    return true;
+                }
+                String targetName = GenericEvents.cachedPlayerName(target);
+                double amount;
+                try {
+                    amount = Double.parseDouble(argAmount);
+                } catch (NumberFormatException nfe) {
+                    amount = -1.0;
+                }
+                if (amount < 0.01) {
+                    player.sendMessage(ChatColor.RED + "Invalid amount: " + argAmount);
+                    return true;
+                }
+                if (!takeMoney(player.getUniqueId(), amount)) {
+                    player.sendMessage(ChatColor.RED + "You cannot afford " + formatMoney(amount) + "!");
+                    return true;
+                }
+                giveMoney(target, amount);
+                db.save(new SQLLog(player.getUniqueId(), -amount, this, "Sent to " + targetName));
+                db.save(new SQLLog(target, amount, this, "Sent by " + player.getName()));
+                player.sendMessage(ChatColor.GREEN + "Sent " + formatMoney(amount) + " to " + targetName);
+                Player targetPlayer = getServer().getPlayer(target);
+                if (targetPlayer != null) {
+                    targetPlayer.sendMessage("" + ChatColor.GREEN + player.getName() + " sent you " + formatMoney(amount) + ".");
+                }
+                return true;
+            }
+            break;
+        case "help": case "?":
+            if (player == null) {
+                sender.sendMessage("Player expected");
+                return true;
+            }
+            if (args.length == 1) {
+                moneyInfo(player);
+                return true;
+            }
+            break;
         default:
             if (args.length == 1 && sender.hasPermission("money.admin")) {
                 UUID target = GenericEvents.cachedPlayerUuid(args[0]);
@@ -201,7 +255,63 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
             }
             break;
         }
+        if (player != null) {
+            moneyInfo(player);
+            return true;
+        }
         return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        String cmd = args.length == 0 ? "" : args[0];
+        String arg = args.length == 0 ? "" : args[args.length - 1];
+        if (args.length == 1) {
+            if (sender.hasPermission("money.admin")) {
+                return Arrays.asList("top", "log", "send", "help", "?", "set", "give", "take").stream().filter(i -> i.startsWith(arg)).collect(Collectors.toList());
+            } else {
+                return Arrays.asList("top", "log", "send", "help", "?").stream().filter(i -> i.startsWith(arg)).collect(Collectors.toList());
+            }
+        } else if (args.length == 3 && cmd.equals("send")) {
+            if (arg.isEmpty()) return Arrays.asList("10.00");
+            try {
+                Double amount = Double.parseDouble(arg);
+                return Arrays.asList(String.format("%.02f", amount));
+            } catch (NumberFormatException nfe) {
+                return Collections.emptyList();
+            }
+        } else if (args.length == 2 && cmd.equals("log")) {
+                return Collections.emptyList();
+        }
+        return null;
+    }
+
+    void moneyInfo(Player player) {
+        double money = getMoney(player.getUniqueId());
+        String format = formatMoney(money);
+        player.sendMessage("");
+        player.sendMessage(ChatColor.GREEN + String.format("You have %s.", format));
+        ComponentBuilder cb = new ComponentBuilder("");
+        cb.append("[Money]").color(ChatColor.GREEN)
+            .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money"))
+            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(ChatColor.GREEN + "/money\n" + ChatColor.WHITE + ChatColor.ITALIC + "Check your balance.")));
+        cb.append("  ");
+        cb.append("[Log]").color(ChatColor.YELLOW)
+            .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money log"))
+            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(ChatColor.YELLOW + "/money log " + ChatColor.ITALIC + "PAGE\n" + ChatColor.WHITE + ChatColor.ITALIC + "Check your bank statement. This is your entire transaction history so you know where your money came from or where it went.")));
+        cb.append("  ");
+        cb.append("[Top]").color(ChatColor.AQUA)
+            .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money top"))
+            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(ChatColor.AQUA + "/money top\n" + ChatColor.WHITE + ChatColor.ITALIC + "Money highscore. List the richest players.")));
+        cb.append("  ");
+        cb.append("[Send]").color(ChatColor.BLUE)
+            .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money send"))
+            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(ChatColor.BLUE + "/money send " + ChatColor.ITALIC + "PLAYER AMOUNT\n" + ChatColor.WHITE + ChatColor.ITALIC + "Send money to other people. This is how business is done.")));
+        player.spigot().sendMessage(cb.create());
+        if (player.hasPermission("money.admin")) {
+            player.sendMessage(ChatColor.GOLD + "Admin commands: set, give, take");
+        }
+        player.sendMessage("");
     }
 
     public String formatMoney(double amount) {
