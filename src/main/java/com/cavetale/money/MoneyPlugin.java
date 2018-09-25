@@ -317,6 +317,7 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
     public String formatMoney(double amount) {
         if (amount > 0.99 && amount < 1.01) return "1 Kitty Coin";
         String[] toks = String.format("%.02f", amount).split("\\.", 2);
+        if (toks[0].startsWith("-")) toks[0] = toks[0].substring(1);
         StringBuilder sb = new StringBuilder();
         int len = toks[0].length();
         for (int i = 0; i < len; i += 1) {
@@ -326,12 +327,14 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
         if (!toks[1].equals("00")) {
             sb.append(".").append(toks[1]);
         }
+        if (amount < 0) sb.insert(0, "-");
         sb.append(" Kitty Coins");
         return sb.toString();
     }
 
     public String formatMoneyMono(double amount) {
         String[] toks = String.format("%.02f", amount).split("\\.", 2);
+        if (toks[0].startsWith("-")) toks[0] = toks[0].substring(1);
         StringBuilder sb = new StringBuilder();
         int len = toks[0].length();
         for (int i = 0; i < len; i += 1) {
@@ -339,6 +342,7 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
             sb.insert(0, toks[0].charAt(len - i - 1));
         }
         sb.append(".").append(toks[1]);
+        if (amount < 0) sb.insert(0, "-");
         return sb.toString();
     }
 
