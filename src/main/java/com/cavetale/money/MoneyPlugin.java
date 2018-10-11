@@ -415,7 +415,7 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
     void onTakePlayerMoney(TakePlayerMoneyEvent event) {
         boolean res = takeMoney(event.getPlayerId(), event.getAmount());
         event.setSuccessful(res);
-        db.save(new SQLLog(event.getPlayerId(), -event.getAmount(), event.getIssuingPlugin(), event.getComment()));
+        if (res) db.save(new SQLLog(event.getPlayerId(), -event.getAmount(), event.getIssuingPlugin(), event.getComment()));
     }
 
     @EventHandler
