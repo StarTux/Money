@@ -334,7 +334,8 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
     }
 
     public String formatMoney(double amount) {
-        return numberFormat.format(amount) + " Kitty Coins";
+        if (amount > 0.99 && amount < 1.01) return "1 Coin";
+        return numberFormat.format(amount) + " Coins";
     }
 
     public String formatDate(Date date) {
