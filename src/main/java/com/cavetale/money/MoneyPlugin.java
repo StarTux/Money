@@ -86,7 +86,7 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
             }
             break;
         case "grant": case "give":
-            if (args.length == 3) {
+            if (args.length >= 3) {
                 if (!sender.hasPermission("money.admin")) return false;
                 UUID owner = PlayerCache.uuidForName(args[1]);
                 if (owner == null) {
@@ -104,13 +104,19 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
                     return true;
                 }
                 giveMoney(owner, amount);
-                db.insert(new SQLLog(owner, amount, this, sender.getName() + " " + args[0] + " " + args[1] + " " + args[2]));
+                if (args.length > 3) {
+                    StringBuilder sb = new StringBuilder(args[3]);
+                    for (int i = 4; i < args.length; i += 1) sb.append(" ").append(args[i]);
+                    db.insertAsync(new SQLLog(owner, amount, this, sb.toString()), null);
+                } else {
+                    db.insertAsync(new SQLLog(owner, amount, this, sender.getName() + " " + args[0] + " " + args[1] + " " + args[2]), null);
+                }
                 sender.sendMessage(String.format("Granted %s %s.", args[1], formatMoney(amount)));
                 return true;
             }
             break;
         case "charge": case "take":
-            if (args.length == 3) {
+            if (args.length >= 3) {
                 if (!sender.hasPermission("money.admin")) return false;
                 UUID owner = PlayerCache.uuidForName(args[1]);
                 if (owner == null) {
@@ -128,7 +134,13 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
                     return true;
                 }
                 if (takeMoney(owner, amount)) {
-                    db.insert(new SQLLog(owner, -amount, this, sender.getName() + " " + args[0] + " " + args[1] + " " + args[2]));
+                    if (args.length > 3) {
+                        StringBuilder sb = new StringBuilder(args[3]);
+                        for (int i = 4; i < args.length; i += 1) sb.append(" ").append(args[i]);
+                        db.insertAsync(new SQLLog(owner, -amount, this, sb.toString()), null);
+                    } else {
+                        db.insertAsync(new SQLLog(owner, -amount, this, sender.getName() + " " + args[0] + " " + args[1] + " " + args[2]), null);
+                    }
                     amount = getMoney(owner);
                     sender.sendMessage(String.format("Balance of %s is now %s.", args[1], formatMoney(amount)));
                 } else {
@@ -243,8 +255,8 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
                     return true;
                 }
                 giveMoney(target, amount);
-                db.insert(new SQLLog(player.getUniqueId(), -amount, this, "Sent to " + targetName));
-                db.insert(new SQLLog(target, amount, this, "Sent by " + player.getName()));
+                db.insertAsync(new SQLLog(player.getUniqueId(), -amount, this, "Sent to " + targetName), null);
+                db.insertAsync(new SQLLog(target, amount, this, "Sent by " + player.getName()), null);
                 player.sendMessage(ChatColor.GREEN + "Sent " + formatMoney(amount) + " to " + targetName);
                 Player targetPlayer = getServer().getPlayer(target);
                 if (targetPlayer != null) {
@@ -328,7 +340,24 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
             .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(ChatColor.BLUE + "/money send " + ChatColor.ITALIC + "PLAYER AMOUNT\n" + ChatColor.WHITE + ChatColor.ITALIC + "Send money to other people. This is how business is done.")));
         player.spigot().sendMessage(cb.create());
         if (player.hasPermission("money.admin")) {
-            player.sendMessage(ChatColor.GOLD + "Admin commands: round, set, give, take");
+            player.sendMessage(ChatColor.GOLD + "* * * " + ChatColor.BOLD + "Admin commands" + ChatColor.RESET + ChatColor.GOLD + " * * *");
+            cb = new ComponentBuilder("");
+            cb.append("<round>").color(ChatColor.GOLD)
+                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money round"))
+                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(ChatColor.GOLD + "/money round\n" + ChatColor.WHITE + ChatColor.ITALIC + "Round all accounts to two decimals.")));
+            cb.append("  ").reset();
+            cb.append("<set>").color(ChatColor.RED)
+                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money set "))
+                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(ChatColor.RED + "/money set <user> <amount>\n" + ChatColor.WHITE + ChatColor.ITALIC + "Set user balance.")));
+            cb.append("  ").reset();
+            cb.append("<give>").color(ChatColor.YELLOW)
+                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money give "))
+                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(ChatColor.YELLOW + "/money give <user> <amount> [comment]\n" + ChatColor.WHITE + ChatColor.ITALIC + "Grant user money.")));
+            cb.append("  ").reset();
+            cb.append("<take>").color(ChatColor.DARK_RED)
+                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money take "))
+                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponent.fromLegacyText(ChatColor.DARK_RED + "/money take <user> <amount> [comment]\n" + ChatColor.WHITE + ChatColor.ITALIC + "Remove user money.")));
+            player.spigot().sendMessage(cb.create());
         }
         player.sendMessage("");
     }
@@ -400,14 +429,14 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
     void onGivePlayerMoney(GivePlayerMoneyEvent event) {
         giveMoney(event.getPlayerId(), event.getAmount());
         event.setSuccessful(true);
-        db.insert(new SQLLog(event.getPlayerId(), event.getAmount(), event.getIssuingPlugin(), event.getComment()));
+        db.insertAsync(new SQLLog(event.getPlayerId(), event.getAmount(), event.getIssuingPlugin(), event.getComment()), null);
     }
 
     @EventHandler
     void onTakePlayerMoney(TakePlayerMoneyEvent event) {
         boolean res = takeMoney(event.getPlayerId(), event.getAmount());
         event.setSuccessful(res);
-        if (res) db.insert(new SQLLog(event.getPlayerId(), -event.getAmount(), event.getIssuingPlugin(), event.getComment()));
+        if (res) db.insertAsync(new SQLLog(event.getPlayerId(), -event.getAmount(), event.getIssuingPlugin(), event.getComment()), null);
     }
 
     @EventHandler
