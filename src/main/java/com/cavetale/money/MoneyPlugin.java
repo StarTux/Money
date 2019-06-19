@@ -33,6 +33,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class MoneyPlugin extends JavaPlugin implements Listener {
     private SQLDatabase db;
     private DecimalFormat numberFormat;
+    private double initialBalance = 1000.0;
 
     @Override
     public void onEnable() {
@@ -47,6 +48,9 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(final CommandSender sender, Command command, String alias, String[] args) {
         Player player = sender instanceof Player ? (Player)sender : null;
+        if (command.getName().equals("pay")) {
+            return payCommand(player, args);
+        }
         if (args.length == 0) {
             if (player == null) return false;
             moneyInfo(player);
@@ -293,6 +297,42 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
         return false;
     }
 
+    boolean payCommand(final Player player, final String[] args) {
+        if (player == null) return false;
+        if (args.length != 2) return false;
+        String argTarget = args[0];
+        String argAmount = args[1];
+        UUID target = GenericEvents.cachedPlayerUuid(argTarget);
+        if (target == null) {
+            player.sendMessage(ChatColor.RED + "Player not found: " + argTarget);
+            return true;
+        }
+        String targetName = GenericEvents.cachedPlayerName(target);
+        double amount;
+        try {
+            amount = numberFormat.parse(argAmount).doubleValue();
+        } catch (ParseException pe) {
+            amount = -1.0;
+        }
+        if (amount < 0.01) {
+            player.sendMessage(ChatColor.RED + "Invalid amount: " + argAmount);
+            return true;
+        }
+        if (!takeMoney(player.getUniqueId(), amount)) {
+            player.sendMessage(ChatColor.RED + "You cannot afford " + formatMoney(amount) + "!");
+            return true;
+        }
+        giveMoney(target, amount);
+        db.insertAsync(new SQLLog(player.getUniqueId(), -amount, this, "Sent to " + targetName), null);
+        db.insertAsync(new SQLLog(target, amount, this, "Sent by " + player.getName()), null);
+        player.sendMessage(ChatColor.GREEN + "Sent " + formatMoney(amount) + " to " + targetName);
+        Player targetPlayer = getServer().getPlayer(target);
+        if (targetPlayer != null) {
+            targetPlayer.sendMessage("" + ChatColor.GREEN + player.getName() + " sent you " + formatMoney(amount) + ".");
+        }
+        return true;
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         String cmd = args.length == 0 ? "" : args[0];
@@ -373,7 +413,7 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
 
     public double getMoney(UUID owner) {
         SQLAccount row = db.find(SQLAccount.class).eq("owner", owner).findUnique();
-        if (row == null) return 0.0;
+        if (row == null) return initialBalance;
         return row.getMoney();
     }
 
@@ -401,7 +441,9 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
         if (Double.isInfinite(amount)) throw new IllegalArgumentException("Amount cannot be infinite");
         if (amount < 0) throw new IllegalArgumentException("Amount cannot be negative");
         String tableName = db.getTable(SQLAccount.class).getTableName();
-        String sql = String.format("INSERT INTO `%s` (owner, money) VALUES ('%s', %.2f) ON DUPLICATE KEY UPDATE money = ROUND(money + %.2f, 2)", tableName, owner, amount, amount);
+        String sql = String
+            .format("INSERT INTO `%s` (owner, money) VALUES ('%s', %.2f) ON DUPLICATE KEY UPDATE money = ROUND(money + %.2f, 2)",
+                    tableName, owner, amount + initialBalance, amount);
         db.executeUpdate(sql);
     }
 
@@ -416,7 +458,20 @@ public final class MoneyPlugin extends JavaPlugin implements Listener {
         if (Double.isInfinite(amount)) throw new IllegalArgumentException("Amount cannot be infinite");
         if (amount < 0) throw new IllegalArgumentException("Amount cannot be negative");
         String tableName = db.getTable(SQLAccount.class).getTableName();
-        String sql = String.format("UPDATE `%s` SET money = ROUND(money - %.2f, 2) WHERE owner = '%s' AND money >= %.2f", tableName, amount, owner, amount);
+        final String sql;
+        if (amount <= initialBalance) {
+            sql = String
+                .format("INSERT INTO `%s` (owner, money)"
+                        + " VALUES ('%s', %.2f)"
+                        + " ON DUPLICATE KEY UPDATE"
+                        + " `money` = IF(money >= %.2f, money - %.2f, money)",
+                        tableName, owner, initialBalance - amount, amount, amount);
+        } else {
+            sql = String
+                .format("UPDATE `%s` SET money = ROUND(money - %.2f, 2)"
+                        + " WHERE owner = '%s' AND money >= %.2f",
+                        tableName, amount, owner, amount);
+        }
         return db.executeUpdate(sql) != 0;
     }
 

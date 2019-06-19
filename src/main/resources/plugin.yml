@@ -5,16 +5,19 @@ version: 0.1
 api-version: 1.13
 website: http://cavetale.com
 main: com.cavetale.money.MoneyPlugin
-depend: [ SQL, PlayerCache, GenericEvents ]
-softdepend: []
+depend: [SQL, PlayerCache, GenericEvents]
+softdepend: [Essentials, EssentialsX]
 commands:
   money:
-    aliases: []
-    description: money
+    aliases: [bal,eco,econ]
+    description: Bank account command interface.
     permission: money.money
-    usage: |-
-      Usage:
-      /money - Check your bank account
+    usage: 'Usage: /money - Check your bank account.'
+  pay:
+    aliases: []
+    description: Send someone money.
+    permission: money.money
+    usage: 'Usage: /pay <player> <amount>'
 permissions:
   money.money:
     description: use /money
