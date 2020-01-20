@@ -21,7 +21,7 @@ public final class SQLLog {
 
     public SQLLog() { }
 
-    SQLLog(UUID owner, double money, Plugin plugin, String comment) {
+    SQLLog(final UUID owner, final double money, final Plugin plugin, final String comment) {
         this.time = new Date();
         this.owner = owner;
         this.money = money;
