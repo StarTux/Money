@@ -9,7 +9,7 @@ depend: [SQL, GenericEvents]
 softdepend: []
 commands:
   money:
-    aliases: []
+    aliases: [bal, balance, eco, account, acc]
     description: money
     permission: money.money
     usage: |-

@@ -77,7 +77,11 @@ public final class MoneyCommand implements TabExecutor {
         String arg = args.length == 0 ? "" : args[args.length - 1];
         if (args.length == 1) {
             if (sender.hasPermission("money.admin")) {
-                return Stream.of("top", "log", "send", "help", "?", "set", "give", "take")
+                return Stream.concat(Stream.of("top", "log", "send",
+                                               "help", "?",
+                                               "set", "give", "take"),
+                                     plugin.getServer().getOnlinePlayers()
+                                     .stream().map(Player::getName))
                     .filter(i -> i.startsWith(arg))
                     .collect(Collectors.toList());
             } else {

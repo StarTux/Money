@@ -26,7 +26,9 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.15.1-R0.1-SNAPSHOT</version>
+      <version>1.15.2-R0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
 
     <!-- Lombok -->
@@ -34,7 +36,7 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>1.14.8</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
 
     <!-- SQL -->
@@ -43,14 +45,7 @@
       <artifactId>sql</artifactId>
       <version>0.1-SNAPSHOT</version>
       <scope>provided</scope>
-    </dependency>
-
-    <!-- PlayerCache -->
-    <dependency>
-      <groupId>com.winthier.playercache</groupId>
-      <artifactId>playercache</artifactId>
-      <version>0.1-SNAPSHOT</version>
-      <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
 
     <!-- GenericEvents -->
@@ -59,6 +54,7 @@
       <artifactId>generic_events</artifactId>
       <version>0.1-SNAPSHOT</version>
       <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
 
   </dependencies>
