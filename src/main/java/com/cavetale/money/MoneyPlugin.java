@@ -17,10 +17,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class MoneyPlugin extends JavaPlugin {
-    public static final String MAJOR_SINGULAR = " Coin";
-    public static final String MAJOR_PLURAL = " Coins";
-    public static final String MINOR_SINGULAR = " Cent";
-    public static final String MINOR_PLURAL = " Cents";
     final SQLDatabase db = new SQLDatabase(this);
     DecimalFormat numberFormat;
     final MoneyCommand moneyCommand = new MoneyCommand(this);
@@ -114,11 +110,7 @@ public final class MoneyPlugin extends JavaPlugin {
     }
 
     public String formatMoney(double amount) {
-        if (amount < 0.01) return "0" + MAJOR_PLURAL;
-        if (amount > 0.99 && amount < 1.01) return "1" + MAJOR_SINGULAR;
-        if (amount > 0.0 && amount < 0.02) return "1" + MINOR_SINGULAR;
-        if (amount < 1.0) return (int) (amount * 100.0) + MINOR_PLURAL;
-        return numberFormat.format(amount) + MAJOR_PLURAL;
+        return "\u26C3" + numberFormat.format(amount);
     }
 
     public String formatDate(Date date) {
