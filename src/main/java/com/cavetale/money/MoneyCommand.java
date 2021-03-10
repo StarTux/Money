@@ -32,19 +32,20 @@ public final class MoneyCommand implements TabExecutor {
         switch (args[0]) {
         case "round": return roundCommand(sender, argl);
         case "set": return setCommand(sender, argl);
-        case "grant": case "give": return grantCommand(sender, args[0], argl);
-        case "charge": case "take": return chargeCommand(sender, args[0], argl);
+        case "grant": case "give": return giveCommand(sender, args[0], argl);
+        case "charge": case "take": return takeCommand(sender, args[0], argl);
         case "top": return topCommand(sender, argl);
         case "log": return logCommand(sender, player, argl);
         case "send":
             if (player == null) {
-                sender.sendMessage("Player expected");
+                sender.sendMessage("[money] player expected");
                 return true;
             }
             return sendCommand(player, argl);
         case "help": case "?":
+            if (!sender.hasPermission("money.help")) return noPerm(sender);
             if (player == null) {
-                sender.sendMessage("Player expected");
+                sender.sendMessage("[money] player expected");
                 return true;
             }
             if (args.length == 1) {
@@ -53,7 +54,8 @@ public final class MoneyCommand implements TabExecutor {
             }
             break;
         default:
-            if (args.length == 1 && sender.hasPermission("money.admin")) {
+            if (args.length == 1) {
+                if (!sender.hasPermission("money.other")) return noPerm(sender);
                 UUID target = GenericEvents.cachedPlayerUuid(args[0]);
                 if (target == null) return false;
                 double money = plugin.getMoney(target);
@@ -71,26 +73,18 @@ public final class MoneyCommand implements TabExecutor {
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command,
-                                      String alias, String[] args) {
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         String cmd = args.length == 0 ? "" : args[0];
         String arg = args.length == 0 ? "" : args[args.length - 1];
         if (args.length == 1) {
-            if (sender.hasPermission("money.admin")) {
-                return Stream.concat(Stream.of("top", "log", "send",
-                                               "help", "?",
-                                               "set", "give", "take"),
-                                     plugin.getServer().getOnlinePlayers()
-                                     .stream().map(Player::getName))
-                    .filter(i -> i.startsWith(arg))
-                    .collect(Collectors.toList());
-            } else {
-                return Stream.of("top", "log", "send", "help", "?")
-                    .filter(i -> i.startsWith(arg))
-                    .collect(Collectors.toList());
-            }
+            Stream<String> commands = Stream.of("top", "log", "send", "help", "set", "give", "take", "round")
+                .filter(c -> sender.hasPermission("money." + c));
+            Stream<String> players = plugin.getServer().getOnlinePlayers().stream().map(Player::getName);
+            return Stream.concat(commands, players)
+                .filter(i -> i.startsWith(arg))
+                .collect(Collectors.toList());
         } else if (args.length == 3 && cmd.equals("send")) {
-            if (arg.isEmpty()) return Arrays.asList("10.00");
+            if (arg.isEmpty()) return Arrays.asList("0.00");
             try {
                 double amount = plugin.numberFormat.parse(arg).doubleValue();
                 return Arrays.asList(plugin.numberFormat.format(amount));
@@ -103,8 +97,13 @@ public final class MoneyCommand implements TabExecutor {
         return null;
     }
 
+    private static boolean noPerm(CommandSender sender) {
+        sender.sendMessage(ChatColor.RED + "You don't have permission!");
+        return true;
+    }
+
     private boolean roundCommand(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("money.admin")) return false;
+        if (!sender.hasPermission("money.round")) return noPerm(sender);
         if (args.length != 0) return false;
         String tableName = plugin.db.getTable(SQLAccount.class).getTableName();
         String sql = String.format("UPDATE `%s` SET money = ROUND(money, 2)", tableName);
@@ -114,8 +113,8 @@ public final class MoneyCommand implements TabExecutor {
     }
 
     private boolean setCommand(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("money.set")) return noPerm(sender);
         if (args.length != 2) return false;
-        if (!sender.hasPermission("money.admin")) return false;
         UUID owner = GenericEvents.cachedPlayerUuid(args[0]);
         if (owner == null) {
             sender.sendMessage("Player not found: " + args[0]);
@@ -138,9 +137,9 @@ public final class MoneyCommand implements TabExecutor {
         return true;
     }
 
-    private boolean grantCommand(CommandSender sender, String alias, String[] args) {
+    private boolean giveCommand(CommandSender sender, String alias, String[] args) {
+        if (!sender.hasPermission("money.give")) return noPerm(sender);
         if (args.length < 2) return false;
-        if (!sender.hasPermission("money.admin")) return false;
         UUID owner = GenericEvents.cachedPlayerUuid(args[0]);
         if (owner == null) {
             sender.sendMessage("Player not found: " + args[0]);
@@ -170,9 +169,9 @@ public final class MoneyCommand implements TabExecutor {
         return true;
     }
 
-    private boolean chargeCommand(CommandSender sender, String alias, String[] args) {
+    private boolean takeCommand(CommandSender sender, String alias, String[] args) {
+        if (!sender.hasPermission("money.take")) return noPerm(sender);
         if (args.length < 2) return false;
-        if (!sender.hasPermission("money.admin")) return false;
         UUID owner = GenericEvents.cachedPlayerUuid(args[0]);
         if (owner == null) {
             sender.sendMessage("Player not found: " + args[0]);
@@ -211,6 +210,7 @@ public final class MoneyCommand implements TabExecutor {
     }
 
     private boolean topCommand(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("money.top")) return noPerm(sender);
         if (args.length > 1) return false;
         int page = 1;
         if (args.length >= 1) {
@@ -249,10 +249,12 @@ public final class MoneyCommand implements TabExecutor {
     }
 
     private boolean logCommand(CommandSender sender, Player player, String[] args) {
+        if (!sender.hasPermission("money.log")) return noPerm(sender);
         if (args.length > 2) return false;
         UUID target = null;
         String targetName = null;
-        if (args.length >= 2 && sender.hasPermission("money.admin")) {
+        if (args.length >= 2) {
+            if (!sender.hasPermission("money.log.other")) return noPerm(sender);
             target = GenericEvents.cachedPlayerUuid(args[1]);
             targetName = args[1];
             if (target == null) {
@@ -302,6 +304,7 @@ public final class MoneyCommand implements TabExecutor {
     }
 
     private boolean sendCommand(Player player, String[] args) {
+        if (!player.hasPermission("money.send")) return noPerm(player);
         if (args.length != 2) return false;
         String argTarget = args[0];
         String argAmount = args[1];

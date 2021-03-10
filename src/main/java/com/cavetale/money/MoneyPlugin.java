@@ -48,41 +48,53 @@ public final class MoneyPlugin extends JavaPlugin {
         cb.append("[Money]").color(ChatColor.GREEN)
             .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money"))
             .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
-        cb.append("  ");
-        tooltip = TextComponent
-            .fromLegacyText(ChatColor.YELLOW + "/money log " + ChatColor.ITALIC + "PAGE\n"
-                            + ChatColor.WHITE + ChatColor.ITALIC + "Check your bank statement."
-                            + " This is your entire transaction history so you know where your"
-                            + " money came from or where it went.");
-        cb.append("[Log]").color(ChatColor.YELLOW)
-            .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money log"))
-            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
-        cb.append("  ");
-        tooltip = TextComponent
-            .fromLegacyText(ChatColor.AQUA + "/money top\n" + ChatColor.WHITE + ChatColor.ITALIC
-                            + "Money highscore. List the richest players.");
-        cb.append("[Top]").color(ChatColor.AQUA)
-            .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money top"))
-            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
-        cb.append("  ");
-        tooltip = TextComponent
-            .fromLegacyText(ChatColor.BLUE + "/money send " + ChatColor.ITALIC + "PLAYER AMOUNT\n"
-                            + ChatColor.WHITE + ChatColor.ITALIC
-                            + "Send money to other people. This is how business is done.");
-        cb.append("[Send]").color(ChatColor.BLUE)
-            .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money send"))
-            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+        if (player.hasPermission("money.log")) {
+            cb.append("  ");
+            tooltip = TextComponent
+                .fromLegacyText(ChatColor.YELLOW + "/money log " + ChatColor.ITALIC + "PAGE\n"
+                                + ChatColor.WHITE + ChatColor.ITALIC + "Check your bank statement."
+                                + " This is your entire transaction history so you know where your"
+                                + " money came from or where it went.");
+            cb.append("[Log]").color(ChatColor.YELLOW)
+                .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money log"))
+                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+        }
+        if (player.hasPermission("money.top")) {
+            cb.append("  ");
+            tooltip = TextComponent
+                .fromLegacyText(ChatColor.AQUA + "/money top\n" + ChatColor.WHITE + ChatColor.ITALIC
+                                + "Money highscore. List the richest players.");
+            cb.append("[Top]").color(ChatColor.AQUA)
+                .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money top"))
+                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+        }
+        if (player.hasPermission("money send")) {
+            cb.append("  ");
+            tooltip = TextComponent
+                .fromLegacyText(ChatColor.BLUE + "/money send " + ChatColor.ITALIC + "PLAYER AMOUNT\n"
+                                + ChatColor.WHITE + ChatColor.ITALIC
+                                + "Send money to other people. This is how business is done.");
+            cb.append("[Send]").color(ChatColor.BLUE)
+                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money send"))
+                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+        }
         player.spigot().sendMessage(cb.create());
         if (player.hasPermission("money.admin")) {
             player.sendMessage(ChatColor.GOLD + "* * * " + ChatColor.BOLD + "Admin commands"
                                + ChatColor.RESET + ChatColor.GOLD + " * * *");
-            cb = new ComponentBuilder("");
+        }
+        cb = null;
+        if (player.hasPermission("money.round")) {
+            if (cb == null) cb = new ComponentBuilder("");
             tooltip = TextComponent
                 .fromLegacyText(ChatColor.GOLD + "/money round\n" + ChatColor.WHITE
                                 + ChatColor.ITALIC + "Round all accounts to two decimals.");
             cb.append("<round>").color(ChatColor.GOLD)
                 .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money round"))
                 .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+        }
+        if (player.hasPermission("money.set")) {
+            if (cb == null) cb = new ComponentBuilder("");
             cb.append("  ").reset();
             tooltip = TextComponent
                 .fromLegacyText(ChatColor.RED + "/money set <user> <amount>\n" + ChatColor.WHITE
@@ -90,6 +102,9 @@ public final class MoneyPlugin extends JavaPlugin {
             cb.append("<set>").color(ChatColor.RED)
                 .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money set "))
                 .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+        }
+        if (player.hasPermission("money.give")) {
+            if (cb == null) cb = new ComponentBuilder("");
             cb.append("  ").reset();
             tooltip = TextComponent
                 .fromLegacyText(ChatColor.YELLOW + "/money give <user> <amount> [comment]\n"
@@ -97,6 +112,9 @@ public final class MoneyPlugin extends JavaPlugin {
             cb.append("<give>").color(ChatColor.YELLOW)
                 .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money give "))
                 .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+        }
+        if (player.hasPermission("money.take")) {
+            if (cb == null) cb = new ComponentBuilder("");
             cb.append("  ").reset();
             tooltip = TextComponent
                 .fromLegacyText(ChatColor.DARK_RED + "/money take <user> <amount> [comment]\n"
@@ -104,6 +122,8 @@ public final class MoneyPlugin extends JavaPlugin {
             cb.append("<take>").color(ChatColor.DARK_RED)
                 .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money take "))
                 .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+        }
+        if (cb != null) {
             player.spigot().sendMessage(cb.create());
         }
         player.sendMessage("");
