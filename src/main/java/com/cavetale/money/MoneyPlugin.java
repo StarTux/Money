@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
+import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -16,14 +17,17 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+@Getter
 public final class MoneyPlugin extends JavaPlugin {
     final SQLDatabase db = new SQLDatabase(this);
     DecimalFormat numberFormat;
     final MoneyCommand moneyCommand = new MoneyCommand(this);
     final EventListener eventListener = new EventListener(this);
+    @Getter protected static MoneyPlugin instance;
 
     @Override
     public void onEnable() {
+        instance = this;
         db.registerTables(SQLAccount.class, SQLLog.class);
         db.createAllTables();
         getServer().getPluginManager().registerEvents(eventListener, this);
