@@ -5,8 +5,8 @@ author: StarTux
 version: 0.1
 api-version: 1.17
 website: https://github.com/StarTux/Money
-depend: [SQL, GenericEvents]
-softdepend: []
+depend: [SQL, PlayerCache]
+softdepend: [Vault]
 
 commands:
 

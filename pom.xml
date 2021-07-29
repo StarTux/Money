@@ -44,6 +44,14 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- Core -->
+    <dependency>
+      <groupId>com.cavetale.core</groupId>
+      <artifactId>core</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- SQL -->
     <dependency>
       <groupId>com.winthier.sql</groupId>
@@ -52,11 +60,19 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- GenericEvents -->
+    <!-- PlayerCache -->
     <dependency>
-      <groupId>com.winthier.generic_events</groupId>
-      <artifactId>generic_events</artifactId>
+      <groupId>com.winthier.playercache</groupId>
+      <artifactId>playercache</artifactId>
       <version>0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Vault API -->
+    <dependency>
+      <groupId>net.milkbowl.vault</groupId>
+      <artifactId>VaultAPI</artifactId>
+      <version>1.7</version>
       <scope>provided</scope>
     </dependency>
 

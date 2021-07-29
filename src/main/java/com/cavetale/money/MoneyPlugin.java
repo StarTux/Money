@@ -1,5 +1,6 @@
 package com.cavetale.money;
 
+import com.cavetale.money.vault.MoneyVault;
 import com.winthier.sql.SQLDatabase;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -14,6 +15,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -26,8 +28,18 @@ public final class MoneyPlugin extends JavaPlugin {
     @Getter protected static MoneyPlugin instance;
 
     @Override
-    public void onEnable() {
+    public void onLoad() {
         instance = this;
+        if (Bukkit.getPluginManager().getPlugin("Vault") != null) {
+            MoneyVault.register(this);
+            getLogger().info("Vault backend registered");
+        } else {
+            getLogger().warning("Vault backend NOT registered!");
+        }
+    }
+
+    @Override
+    public void onEnable() {
         db.registerTables(SQLAccount.class, SQLLog.class);
         db.createAllTables();
         getServer().getPluginManager().registerEvents(eventListener, this);

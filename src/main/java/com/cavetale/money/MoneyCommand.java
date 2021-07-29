@@ -1,6 +1,6 @@
 package com.cavetale.money;
 
-import com.winthier.generic_events.GenericEvents;
+import com.winthier.playercache.PlayerCache;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,7 +56,7 @@ public final class MoneyCommand implements TabExecutor {
         default:
             if (args.length == 1) {
                 if (!sender.hasPermission("money.other")) return noPerm(sender);
-                UUID target = GenericEvents.cachedPlayerUuid(args[0]);
+                UUID target = PlayerCache.uuidForName(args[0]);
                 if (target == null) return false;
                 double money = plugin.getMoney(target);
                 String format = plugin.formatMoney(money);
@@ -115,12 +115,12 @@ public final class MoneyCommand implements TabExecutor {
     private boolean setCommand(CommandSender sender, String[] args) {
         if (!sender.hasPermission("money.set")) return noPerm(sender);
         if (args.length != 2) return false;
-        UUID owner = GenericEvents.cachedPlayerUuid(args[0]);
+        UUID owner = PlayerCache.uuidForName(args[0]);
         if (owner == null) {
             sender.sendMessage("Player not found: " + args[0]);
             return true;
         }
-        String name = GenericEvents.cachedPlayerName(owner);
+        String name = PlayerCache.nameForUuid(owner);
         double amount;
         try {
             amount = plugin.numberFormat.parse(args[1]).doubleValue();
@@ -140,12 +140,12 @@ public final class MoneyCommand implements TabExecutor {
     private boolean giveCommand(CommandSender sender, String alias, String[] args) {
         if (!sender.hasPermission("money.give")) return noPerm(sender);
         if (args.length < 2) return false;
-        UUID owner = GenericEvents.cachedPlayerUuid(args[0]);
+        UUID owner = PlayerCache.uuidForName(args[0]);
         if (owner == null) {
             sender.sendMessage("Player not found: " + args[0]);
             return true;
         }
-        String name = GenericEvents.cachedPlayerName(owner);
+        String name = PlayerCache.nameForUuid(owner);
         double amount;
         try {
             amount = plugin.numberFormat.parse(args[1]).doubleValue();
@@ -172,12 +172,12 @@ public final class MoneyCommand implements TabExecutor {
     private boolean takeCommand(CommandSender sender, String alias, String[] args) {
         if (!sender.hasPermission("money.take")) return noPerm(sender);
         if (args.length < 2) return false;
-        UUID owner = GenericEvents.cachedPlayerUuid(args[0]);
+        UUID owner = PlayerCache.uuidForName(args[0]);
         if (owner == null) {
             sender.sendMessage("Player not found: " + args[0]);
             return true;
         }
-        String name = GenericEvents.cachedPlayerName(owner);
+        String name = PlayerCache.nameForUuid(owner);
         double amount;
         try {
             amount = plugin.numberFormat.parse(args[1]).doubleValue();
@@ -238,7 +238,7 @@ public final class MoneyCommand implements TabExecutor {
                 int i = 0;
                 for (SQLAccount row: top) {
                     i += 1;
-                    String name = GenericEvents.cachedPlayerName(row.getOwner());
+                    String name = PlayerCache.nameForUuid(row.getOwner());
                     sender.sendMessage(" " + ChatColor.DARK_GREEN + (offset + i) + ") "
                                        + ChatColor.GREEN
                                        + plugin.numberFormat.format(row.getMoney())
@@ -255,7 +255,7 @@ public final class MoneyCommand implements TabExecutor {
         String targetName = null;
         if (args.length >= 2) {
             if (!sender.hasPermission("money.log.other")) return noPerm(sender);
-            target = GenericEvents.cachedPlayerUuid(args[1]);
+            target = PlayerCache.uuidForName(args[1]);
             targetName = args[1];
             if (target == null) {
                 sender.sendMessage("Unknown bank account: " + args[1]);
@@ -308,12 +308,12 @@ public final class MoneyCommand implements TabExecutor {
         if (args.length != 2) return false;
         String argTarget = args[0];
         String argAmount = args[1];
-        UUID target = GenericEvents.cachedPlayerUuid(argTarget);
+        UUID target = PlayerCache.uuidForName(argTarget);
         if (target == null) {
             player.sendMessage(ChatColor.RED + "Player not found: " + argTarget);
             return true;
         }
-        String targetName = GenericEvents.cachedPlayerName(target);
+        String targetName = PlayerCache.nameForUuid(target);
         double amount;
         try {
             amount = plugin.numberFormat.parse(argAmount).doubleValue();
