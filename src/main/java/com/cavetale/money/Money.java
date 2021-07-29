@@ -15,14 +15,30 @@ public final class Money {
     }
 
     public static boolean give(UUID uuid, double amount, Plugin plugin, String comment) {
-        if (amount < 0.0) throw new IllegalArgumentException(amount + "<0");
+        if (Double.isNaN(amount)) {
+            throw new IllegalArgumentException("Amount cannot be NaN");
+        }
+        if (Double.isInfinite(amount)) {
+            throw new IllegalArgumentException("Amount cannot be infinite");
+        }
+        if (amount < 0) {
+            throw new IllegalArgumentException("Amount cannot be negative");
+        }
         MoneyPlugin.instance.giveMoney(uuid, amount);
         MoneyPlugin.instance.db.insertAsync(new SQLLog(uuid, amount, plugin, comment), null);
         return true;
     }
 
     public static boolean take(UUID uuid, double amount, Plugin plugin, String comment) {
-        if (amount < 0.0) throw new IllegalArgumentException(amount + "<0");
+        if (Double.isNaN(amount)) {
+            throw new IllegalArgumentException("Amount cannot be NaN");
+        }
+        if (Double.isInfinite(amount)) {
+            throw new IllegalArgumentException("Amount cannot be infinite");
+        }
+        if (amount < 0) {
+            throw new IllegalArgumentException("Amount cannot be negative");
+        }
         if (!MoneyPlugin.instance.takeMoney(uuid, amount)) return false;
         MoneyPlugin.instance.db.insertAsync(new SQLLog(uuid, -amount, plugin, comment), null);
         return true;
