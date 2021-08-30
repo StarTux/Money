@@ -1,5 +1,6 @@
 package com.cavetale.money;
 
+import com.cavetale.core.event.player.PluginPlayerEvent;
 import com.winthier.playercache.PlayerCache;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -26,6 +27,7 @@ public final class MoneyCommand implements TabExecutor {
         if (args.length == 0) {
             if (player == null) return false;
             plugin.moneyInfo(player);
+            PluginPlayerEvent.Name.USE_MONEY.call(plugin, player);
             return true;
         }
         String[] argl = Arrays.copyOfRange(args, 1, args.length);
