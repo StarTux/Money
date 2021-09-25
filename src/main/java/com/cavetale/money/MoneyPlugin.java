@@ -59,10 +59,10 @@ public final class MoneyPlugin extends JavaPlugin {
         ComponentBuilder cb = new ComponentBuilder("");
         BaseComponent[] tooltip;
         tooltip = TextComponent
-            .fromLegacyText(ChatColor.GREEN + "/money\n"
-                            + ChatColor.WHITE + ChatColor.ITALIC + "Check your balance.");
-        cb.append("[Money]").color(ChatColor.GREEN)
-            .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money"))
+            .fromLegacyText(ChatColor.GREEN + "/money send <player> <amount>\n"
+                            + ChatColor.WHITE + ChatColor.ITALIC + "Pay somebody");
+        cb.append("[Send]").color(ChatColor.GREEN)
+            .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money send"))
             .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
         if (player.hasPermission("money.log")) {
             cb.append("  ");
