@@ -12,12 +12,13 @@ import org.bukkit.plugin.Plugin;
 @Data @Table(name = "logs",
              indexes = @Index(columnList = "owner"))
 public final class SQLLog {
+    private static final int MAX_COMMENT_LENGTH = 255;
     @Id private Integer id;
     @Column(nullable = false) private Date time;
     @Column(nullable = false) private UUID owner;
     @Column(nullable = false) private Double money;
     @Column(nullable = true, length = 255) private String plugin;
-    @Column(nullable = true, length = 255) private String comment;
+    @Column(nullable = true, length = MAX_COMMENT_LENGTH) private String comment;
 
     public SQLLog() { }
 
@@ -27,6 +28,7 @@ public final class SQLLog {
         this.money = money;
         String pluginName = plugin == null ? null : plugin.getName();
         this.plugin = pluginName;
-        this.comment = comment;
+        this.comment = comment.length() <= MAX_COMMENT_LENGTH
+            ? comment : comment.substring(0, MAX_COMMENT_LENGTH);
     }
 }
