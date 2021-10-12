@@ -5,16 +5,19 @@ import com.winthier.sql.SQLDatabase;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.function.Consumer;
 import lombok.Getter;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentLike;
+import net.kyori.adventure.text.JoinConfiguration;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -51,98 +54,52 @@ public final class MoneyPlugin extends JavaPlugin {
         }
     }
 
-    void moneyInfo(Player player) {
-        double money = getMoney(player.getUniqueId());
+    private static Component lines(ComponentLike... lines) {
+        return Component.join(JoinConfiguration.separator(Component.newline()), lines);
+    }
+
+    private static Component lines(Iterable<? extends ComponentLike> lines) {
+        return Component.join(JoinConfiguration.separator(Component.newline()), lines);
+    }
+
+    public void moneyInfo(Player player, double money) {
         String format = formatMoney(money);
-        player.sendMessage("");
-        player.sendMessage(ChatColor.GREEN + String.format("You have %s.", format));
-        ComponentBuilder cb = new ComponentBuilder("");
-        BaseComponent[] tooltip;
-        tooltip = TextComponent
-            .fromLegacyText(ChatColor.GREEN + "/money send <player> <amount>\n"
-                            + ChatColor.WHITE + ChatColor.ITALIC + "Pay somebody");
-        cb.append("[Send]").color(ChatColor.GREEN)
-            .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money send"))
-            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.empty());
+        lines.add(Component.text("You have " + format, NamedTextColor.GREEN));
+        List<Component> buttons = new ArrayList<>();
+        if (player.hasPermission("money.send")) {
+            buttons.add(Component.text("[Send]", NamedTextColor.GREEN)
+                        .clickEvent(ClickEvent.suggestCommand("/money send "))
+                        .hoverEvent(HoverEvent.showText(lines(new Component[] {
+                                        Component.text("/money send <player> <amount>", NamedTextColor.GREEN),
+                                        Component.text("Send somebody money", NamedTextColor.GRAY),
+                                    }))));
+        }
         if (player.hasPermission("money.log")) {
-            cb.append("  ");
-            tooltip = TextComponent
-                .fromLegacyText(ChatColor.YELLOW + "/money log " + ChatColor.ITALIC + "PAGE\n"
-                                + ChatColor.WHITE + ChatColor.ITALIC + "Check your bank statement."
-                                + " This is your entire transaction history so you know where your"
-                                + " money came from or where it went.");
-            cb.append("[Log]").color(ChatColor.YELLOW)
-                .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money log"))
-                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+            buttons.add(Component.text("[Log]", NamedTextColor.YELLOW)
+                        .clickEvent(ClickEvent.runCommand("/money log"))
+                        .hoverEvent(HoverEvent.showText(lines(new Component[] {
+                                        Component.text("/money log <page>", NamedTextColor.YELLOW),
+                                        Component.text("Check your transaction", NamedTextColor.GRAY),
+                                        Component.text("history.", NamedTextColor.GRAY),
+                                    }))));
         }
         if (player.hasPermission("money.top")) {
-            cb.append("  ");
-            tooltip = TextComponent
-                .fromLegacyText(ChatColor.AQUA + "/money top\n" + ChatColor.WHITE + ChatColor.ITALIC
-                                + "Money highscore. List the richest players.");
-            cb.append("[Top]").color(ChatColor.AQUA)
-                .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/money top"))
-                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
+            buttons.add(Component.text("[Top]", NamedTextColor.AQUA)
+                        .clickEvent(ClickEvent.runCommand("/money top"))
+                        .hoverEvent(HoverEvent.showText(lines(new Component[] {
+                                        Component.text("/money top" + NamedTextColor.AQUA),
+                                        Component.text("Money highscore.", NamedTextColor.GRAY),
+                                        Component.text("List the richest players.", NamedTextColor.GRAY),
+                                    }))));
         }
-        if (player.hasPermission("money send")) {
-            cb.append("  ");
-            tooltip = TextComponent
-                .fromLegacyText(ChatColor.BLUE + "/money send " + ChatColor.ITALIC + "PLAYER AMOUNT\n"
-                                + ChatColor.WHITE + ChatColor.ITALIC
-                                + "Send money to other people. This is how business is done.");
-            cb.append("[Send]").color(ChatColor.BLUE)
-                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money send"))
-                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
-        }
-        player.spigot().sendMessage(cb.create());
-        if (player.hasPermission("money.admin")) {
-            player.sendMessage(ChatColor.GOLD + "* * * " + ChatColor.BOLD + "Admin commands"
-                               + ChatColor.RESET + ChatColor.GOLD + " * * *");
-        }
-        cb = null;
-        if (player.hasPermission("money.round")) {
-            if (cb == null) cb = new ComponentBuilder("");
-            tooltip = TextComponent
-                .fromLegacyText(ChatColor.GOLD + "/money round\n" + ChatColor.WHITE
-                                + ChatColor.ITALIC + "Round all accounts to two decimals.");
-            cb.append("<round>").color(ChatColor.GOLD)
-                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money round"))
-                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
-        }
-        if (player.hasPermission("money.set")) {
-            if (cb == null) cb = new ComponentBuilder("");
-            cb.append("  ").reset();
-            tooltip = TextComponent
-                .fromLegacyText(ChatColor.RED + "/money set <user> <amount>\n" + ChatColor.WHITE
-                                + ChatColor.ITALIC + "Set user balance.");
-            cb.append("<set>").color(ChatColor.RED)
-                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money set "))
-                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
-        }
-        if (player.hasPermission("money.give")) {
-            if (cb == null) cb = new ComponentBuilder("");
-            cb.append("  ").reset();
-            tooltip = TextComponent
-                .fromLegacyText(ChatColor.YELLOW + "/money give <user> <amount> [comment]\n"
-                                + ChatColor.WHITE + ChatColor.ITALIC + "Grant user money.");
-            cb.append("<give>").color(ChatColor.YELLOW)
-                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money give "))
-                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
-        }
-        if (player.hasPermission("money.take")) {
-            if (cb == null) cb = new ComponentBuilder("");
-            cb.append("  ").reset();
-            tooltip = TextComponent
-                .fromLegacyText(ChatColor.DARK_RED + "/money take <user> <amount> [comment]\n"
-                                + ChatColor.WHITE + ChatColor.ITALIC + "Remove user money.");
-            cb.append("<take>").color(ChatColor.DARK_RED)
-                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/money take "))
-                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip));
-        }
-        if (cb != null) {
-            player.spigot().sendMessage(cb.create());
-        }
-        player.sendMessage("");
+        lines.add(Component.empty());
+        player.sendMessage(lines(lines));
+    }
+
+    public void moneyInfo(Player player) {
+        getMoneyAsync(player.getUniqueId(), amount -> moneyInfo(player, amount));
     }
 
     public String formatMoney(double amount) {
@@ -157,6 +114,12 @@ public final class MoneyPlugin extends JavaPlugin {
         SQLAccount row = db.find(SQLAccount.class).eq("owner", owner).findUnique();
         if (row == null) return 0.0;
         return row.getMoney();
+    }
+
+    public void getMoneyAsync(UUID owner, Consumer<Double> callback) {
+        db.find(SQLAccount.class).eq("owner", owner).findUniqueAsync(row -> {
+                callback.accept(row != null ? row.getMoney() : 0.0);
+            });
     }
 
     /**
