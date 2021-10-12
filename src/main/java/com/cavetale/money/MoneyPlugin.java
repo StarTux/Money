@@ -94,6 +94,7 @@ public final class MoneyPlugin extends JavaPlugin {
                                         Component.text("List the richest players.", NamedTextColor.GRAY),
                                     }))));
         }
+        lines.add(Component.join(JoinConfiguration.separator(Component.space()), buttons));
         lines.add(Component.empty());
         player.sendMessage(lines(lines));
     }
