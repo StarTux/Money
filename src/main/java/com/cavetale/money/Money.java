@@ -25,7 +25,7 @@ public final class Money {
             throw new IllegalArgumentException("Amount cannot be negative");
         }
         MoneyPlugin.instance.giveMoney(uuid, amount);
-        MoneyPlugin.instance.db.insertAsync(new SQLLog(uuid, amount, plugin, comment), null);
+        MoneyPlugin.instance.log(uuid, amount, plugin, comment);
         return true;
     }
 
@@ -40,7 +40,7 @@ public final class Money {
             throw new IllegalArgumentException("Amount cannot be negative");
         }
         if (!MoneyPlugin.instance.takeMoney(uuid, amount)) return false;
-        MoneyPlugin.instance.db.insertAsync(new SQLLog(uuid, -amount, plugin, comment), null);
+        MoneyPlugin.instance.log(uuid, -amount, plugin, comment);
         return true;
     }
 

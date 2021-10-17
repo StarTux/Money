@@ -16,7 +16,7 @@ public final class SQLLog {
     @Id private Integer id;
     @Column(nullable = false) private Date time;
     @Column(nullable = false) private UUID owner;
-    @Column(nullable = false) private Double money;
+    @Column(nullable = false) private double money;
     @Column(nullable = true, length = 255) private String plugin;
     @Column(nullable = true, length = MAX_COMMENT_LENGTH) private String comment;
 

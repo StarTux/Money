@@ -7,8 +7,10 @@ import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.Getter;
@@ -20,15 +22,17 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
 public final class MoneyPlugin extends JavaPlugin {
-    final SQLDatabase db = new SQLDatabase(this);
-    DecimalFormat numberFormat;
-    final MoneyCommand moneyCommand = new MoneyCommand(this);
-    final EventListener eventListener = new EventListener(this);
     @Getter protected static MoneyPlugin instance;
+    protected final SQLDatabase db = new SQLDatabase(this);
+    protected DecimalFormat numberFormat;
+    protected final MoneyCommand moneyCommand = new MoneyCommand(this);
+    protected final EventListener eventListener = new EventListener(this);
+    protected final Map<UUID, Cached> cache = new HashMap<>();
 
     @Override
     public void onLoad() {
@@ -50,7 +54,8 @@ public final class MoneyPlugin extends JavaPlugin {
         numberFormat.setParseBigDecimal(true);
         getCommand("money").setExecutor(moneyCommand);
         for (Player player : getServer().getOnlinePlayers()) {
-            createAccount(player);
+            createAccountAsync(player);
+            createCache(player);
         }
     }
 
@@ -119,7 +124,8 @@ public final class MoneyPlugin extends JavaPlugin {
 
     public void getMoneyAsync(UUID owner, Consumer<Double> callback) {
         db.find(SQLAccount.class).eq("owner", owner).findUniqueAsync(row -> {
-                callback.accept(row != null ? row.getMoney() : 0.0);
+                double amount = row != null ? row.getMoney() : 0.0;
+                callback.accept(amount);
             });
     }
 
@@ -135,6 +141,10 @@ public final class MoneyPlugin extends JavaPlugin {
                                    + " ON DUPLICATE KEY UPDATE money = %.2f",
                                    tableName, owner, amount, amount);
         db.executeUpdate(sql);
+        getMoneyAsync(owner, newMoney -> applyCache(owner, cached -> {
+                    cached.money = newMoney;
+                    cached.showProgress = true;
+                }));
     }
 
     /**
@@ -152,6 +162,10 @@ public final class MoneyPlugin extends JavaPlugin {
                                    + " ON DUPLICATE KEY UPDATE money = ROUND(money + %.2f, 2)",
                                    tableName, owner, amount, amount);
         db.executeUpdate(sql);
+        getMoneyAsync(owner, newMoney -> applyCache(owner, cached -> {
+                    cached.money = newMoney;
+                    cached.showProgress = true;
+                }));
     }
 
     /**
@@ -167,7 +181,12 @@ public final class MoneyPlugin extends JavaPlugin {
         String sql = String.format("UPDATE `%s` SET money = ROUND(money - %.2f, 2)"
                                    + " WHERE owner = '%s' AND money >= %.2f",
                                    tableName, amount, owner, amount);
-        return db.executeUpdate(sql) != 0;
+        final int result = db.executeUpdate(sql);
+        getMoneyAsync(owner, newMoney -> applyCache(owner, cached -> {
+                    cached.money = newMoney;
+                    cached.showProgress = true;
+                }));
+        return result != 0;
     }
 
     private void testAmount(double amount) {
@@ -182,7 +201,7 @@ public final class MoneyPlugin extends JavaPlugin {
         }
     }
 
-    void createAccount(Player player) {
+    protected void createAccountAsync(Player player) {
         String tableName = db.getTable(SQLAccount.class).getTableName();
         UUID uuid = player.getUniqueId();
         final String name = player.getName();
@@ -191,7 +210,36 @@ public final class MoneyPlugin extends JavaPlugin {
                                    tableName, uuid, 0.0);
         db.executeUpdateAsync(sql, (ret) -> {
                 if (ret == null || ret == 0) return;
-                getLogger().info("Created account for " + name + ".");
+                getLogger().info("Created account for " + name);
+            });
+    }
+
+    protected void applyCache(UUID uuid, Consumer<Cached> consumer) {
+        Cached cached = cache.get(uuid);
+        if (cached != null) consumer.accept(cached);
+    }
+
+    protected void createCache(Player player) {
+        UUID uuid = player.getUniqueId();
+        getMoneyAsync(uuid, amount -> {
+                if (!player.isOnline()) return;
+                if (cache.containsKey(uuid)) return;
+                Cached cached = new Cached();
+                cached.money = amount;
+                cached.displayMoney = amount;
+                cached.showTimed = true;
+                cached.showUntil = System.currentTimeMillis() + 10000L;
+                cache.put(uuid, cached);
+            });
+    }
+
+    protected void log(final UUID owner, final double money, final Plugin plugin, final String comment) {
+        SQLLog log = new SQLLog(owner, money, plugin, comment);
+        db.insertAsync(log, null);
+        applyCache(owner, cached -> {
+                cached.logs.add(log);
+                cached.showTimed = true;
+                cached.showUntil = System.currentTimeMillis() + 10000L;
             });
     }
 }

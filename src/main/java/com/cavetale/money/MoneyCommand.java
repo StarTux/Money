@@ -162,10 +162,9 @@ public final class MoneyCommand implements TabExecutor {
         if (args.length > 2) {
             StringBuilder sb = new StringBuilder(args[2]);
             for (int i = 3; i < args.length; i += 1) sb.append(" ").append(args[i]);
-            plugin.db.insertAsync(new SQLLog(owner, amount, plugin, sb.toString()), null);
+            plugin.log(owner, amount, plugin, sb.toString());
         } else {
-            plugin.db.insertAsync(new SQLLog(owner, amount, plugin, sender.getName() + ": /" + alias
-                                      + " " + args[0] + " " + args[1]), null);
+            plugin.log(owner, amount, plugin, sender.getName() + ": /" + alias + " " + args[0] + " " + args[1]);
         }
         sender.sendMessage(String.format("Granted %s %s.", name, plugin.formatMoney(amount)));
         return true;
@@ -194,10 +193,9 @@ public final class MoneyCommand implements TabExecutor {
             if (args.length > 2) {
                 StringBuilder sb = new StringBuilder(args[2]);
                 for (int i = 3; i < args.length; i += 1) sb.append(" ").append(args[i]);
-                plugin.db.insertAsync(new SQLLog(owner, -amount, plugin, sb.toString()), null);
+                plugin.log(owner, -amount, plugin, sb.toString());
             } else {
-                plugin.db.insertAsync(new SQLLog(owner, -amount, plugin, sender.getName() + ": /"
-                                                 + alias + " " + args[0] + " " + args[1]), null);
+                plugin.log(owner, -amount, plugin, sender.getName() + ": /" + alias + " " + args[0] + " " + args[1]);
             }
             amount = plugin.getMoney(owner);
             sender.sendMessage(String.format("Balance of %s is now %s.", name,
@@ -332,10 +330,8 @@ public final class MoneyCommand implements TabExecutor {
             return true;
         }
         plugin.giveMoney(target, amount);
-        plugin.db.insertAsync(new SQLLog(player.getUniqueId(), -amount, plugin,
-                                         "Sent to " + targetName), null);
-        plugin.db.insertAsync(new SQLLog(target, amount, plugin, "Sent by " + player.getName()),
-                              null);
+        plugin.log(player.getUniqueId(), -amount, plugin, "Sent to " + targetName);
+        plugin.log(target, amount, plugin, "Sent by " + player.getName());
         player.sendMessage(ChatColor.GREEN + "Sent " + plugin.formatMoney(amount)
                            + " to " + targetName);
         Player targetPlayer = plugin.getServer().getPlayer(target);
