@@ -227,8 +227,6 @@ public final class MoneyPlugin extends JavaPlugin {
                 Cached cached = new Cached();
                 cached.money = amount;
                 cached.displayMoney = amount;
-                cached.showTimed = true;
-                cached.showUntil = System.currentTimeMillis() + 10000L;
                 cache.put(uuid, cached);
             });
     }
