@@ -86,7 +86,7 @@ public final class EventListener implements Listener {
                       ? Component.text("+" + format, NamedTextColor.GREEN)
                       : Component.text(format, NamedTextColor.RED));
             if (log.getComment() != null) {
-                for (String line : ChatPaginator.wordWrap(log.getComment(), 15)) {
+                for (String line : ChatPaginator.wordWrap(log.getComment(), 22)) {
                     lines.add(Component.text(" " + ChatColor.stripColor(line), NamedTextColor.GRAY));
                 }
             }
