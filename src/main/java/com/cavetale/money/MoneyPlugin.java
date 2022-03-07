@@ -31,6 +31,7 @@ public final class MoneyPlugin extends JavaPlugin {
     protected final SQLDatabase db = new SQLDatabase(this);
     protected DecimalFormat numberFormat;
     protected final MoneyCommand moneyCommand = new MoneyCommand(this);
+    protected final AdminCommand adminCommand = new AdminCommand(this);
     protected final EventListener eventListener = new EventListener(this);
     protected final Map<UUID, Cached> cache = new HashMap<>();
 
@@ -52,7 +53,8 @@ public final class MoneyPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(eventListener, this);
         numberFormat = new DecimalFormat("#,###.00", new DecimalFormatSymbols(Locale.US));
         numberFormat.setParseBigDecimal(true);
-        getCommand("money").setExecutor(moneyCommand);
+        moneyCommand.enable();
+        adminCommand.enable();
         for (Player player : getServer().getOnlinePlayers()) {
             createAccountAsync(player);
             createCache(player);
@@ -109,7 +111,10 @@ public final class MoneyPlugin extends JavaPlugin {
     }
 
     public String formatMoney(double amount) {
-        return "\u26C3" + numberFormat.format(amount);
+        String format = numberFormat.format(amount);
+        if (format.endsWith(".00")) format = format.substring(0, format.length() - 3);
+        if (format.isEmpty()) format = "0";
+        return "\u26C3" + format;
     }
 
     public String formatDate(Date date) {

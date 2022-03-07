@@ -3,7 +3,7 @@ name: Money
 description: Money management
 author: StarTux
 version: 0.1
-api-version: 1.17
+api-version: 1.18
 website: https://github.com/StarTux/Money
 depend: [Core, SQL, PlayerCache, Sidebar]
 softdepend: [Vault]
@@ -12,11 +12,15 @@ commands:
 
   money:
     aliases: [bal, balance, eco, account, acc]
-    description: money
+    description: Player Interface
     permission: money.money
-    usage: |-
-      Usage:
-      /money - Check your bank account
+    usage: /money
+
+  moneyadmin:
+    aliases: []
+    description: Admin Interface
+    permission: money.admin
+    usage: /moneyadmin
 
 permissions:
 
@@ -24,68 +28,6 @@ permissions:
     description: use /money
     default: op
 
-  money.player:
-    description: Use player commands
-    default: false
-    children:
-      money.money: true
-      money.send: true
-      money.log: true
-      money.help: true
-      money.top: true
-
   money.admin:
     description: Use admin commands
-    default: op
-    children:
-      money.money: true
-      money.round: true
-      money.set: true
-      money.give: true
-      money.take: true
-      money.top: true
-      money.log: true
-      money.log.other: true
-      money.send: true
-      money.help: true
-      money.other: true
-
-  money.round:
-    description: Use /money round
-    default: op
-
-  money.set:
-    description: Use /money set
-    default: op
-
-  money.give:
-    description: Use /money give
-    default: op
-
-  money.take:
-    description: Use /money take
-    default: op
-
-  money.top:
-    description: Use /money top
-    default: op
-
-  money.log:
-    description: Use /money log
-    default: op
-
-  money.log.other:
-    description: Check logs of other players
-    default: op
-
-  money.other:
-    description: Check accounts of other players
-    default: op
-
-  money.send:
-    description: Use /money send
-    default: op
-
-  money.help:
-    description: Use /money help
     default: op
