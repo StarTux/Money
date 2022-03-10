@@ -17,7 +17,7 @@ commands:
     usage: /money
 
   moneyadmin:
-    aliases: []
+    aliases: [moneyadm]
     description: Admin Interface
     permission: money.admin
     usage: /moneyadmin
