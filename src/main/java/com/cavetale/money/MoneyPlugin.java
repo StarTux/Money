@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
@@ -33,10 +34,17 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+@Getter
 public final class MoneyPlugin extends JavaPlugin implements Listener {
+    @Getter private static MoneyPlugin instance;
     private SQLDatabase db;
     private DecimalFormat numberFormat;
-    private double initialBalance = 1000.0;
+    @Getter private static double initialBalance = 1000.0;
+
+    @Override
+    public void onLoad() {
+        instance = this;
+    }
 
     @Override
     public void onEnable() {

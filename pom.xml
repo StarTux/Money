@@ -3,7 +3,7 @@
 
   <groupId>com.cavetale.money</groupId>
   <artifactId>money</artifactId>
-  <version>0.1-SNAPSHOT</version>
+  <version>1.12.2-SNAPSHOT</version>
 
   <packaging>jar</packaging>
   <name>Money</name>
@@ -27,14 +27,14 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.13-R0.1-SNAPSHOT</version>
+      <version>1.12.2-R0.1-SNAPSHOT</version>
     </dependency>
 
     <!-- Lombok -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.18.12</version>
+      <version>1.18.20</version>
       <scope>provided</scope>
     </dependency>
 
@@ -42,7 +42,7 @@
     <dependency>
       <groupId>com.winthier.sql</groupId>
       <artifactId>sql</artifactId>
-      <version>0.1-SNAPSHOT</version>
+      <version>1.12.2-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
 
@@ -50,7 +50,7 @@
     <dependency>
       <groupId>com.winthier.playercache</groupId>
       <artifactId>playercache</artifactId>
-      <version>0.1-SNAPSHOT</version>
+      <version>1.12.2-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
 
@@ -58,7 +58,7 @@
     <dependency>
       <groupId>com.winthier.generic_events</groupId>
       <artifactId>generic_events</artifactId>
-      <version>0.1-SNAPSHOT</version>
+      <version>1.12.2-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
 
