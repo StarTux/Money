@@ -16,14 +16,19 @@ import java.util.function.Consumer;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
-import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import static net.kyori.adventure.text.Component.empty;
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.newline;
+import static net.kyori.adventure.text.Component.space;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @Getter
 public final class MoneyPlugin extends JavaPlugin {
@@ -62,47 +67,49 @@ public final class MoneyPlugin extends JavaPlugin {
     }
 
     private static Component lines(ComponentLike... lines) {
-        return Component.join(JoinConfiguration.separator(Component.newline()), lines);
+        return join(separator(newline()), lines);
     }
 
     private static Component lines(Iterable<? extends ComponentLike> lines) {
-        return Component.join(JoinConfiguration.separator(Component.newline()), lines);
+        return join(separator(newline()), lines);
     }
 
     public void moneyInfo(Player player, double money) {
         String format = formatMoney(money);
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.empty());
-        lines.add(Component.text("You have " + format, NamedTextColor.GREEN));
+        lines.add(empty());
+        lines.add(text("You have " + format, GREEN));
         List<Component> buttons = new ArrayList<>();
         if (player.hasPermission("money.send")) {
-            buttons.add(Component.text("[Send]", NamedTextColor.GREEN)
+            buttons.add(text("[Send]", GREEN)
                         .clickEvent(ClickEvent.suggestCommand("/money send "))
                         .hoverEvent(HoverEvent.showText(lines(new Component[] {
-                                        Component.text("/money send <player> <amount>", NamedTextColor.GREEN),
-                                        Component.text("Send somebody money", NamedTextColor.GRAY),
+                                        text("/money send <player> <amount>", GREEN),
+                                        text("Send somebody money", GRAY),
                                     }))));
         }
         if (player.hasPermission("money.log")) {
-            buttons.add(Component.text("[Log]", NamedTextColor.YELLOW)
+            buttons.add(text("[Log]", YELLOW)
                         .clickEvent(ClickEvent.runCommand("/money log"))
                         .hoverEvent(HoverEvent.showText(lines(new Component[] {
-                                        Component.text("/money log <page>", NamedTextColor.YELLOW),
-                                        Component.text("Check your transaction", NamedTextColor.GRAY),
-                                        Component.text("history.", NamedTextColor.GRAY),
+                                        text("/money log <page>", YELLOW),
+                                        text("Check your transaction", GRAY),
+                                        text("history.", GRAY),
                                     }))));
         }
         if (player.hasPermission("money.top")) {
-            buttons.add(Component.text("[Top]", NamedTextColor.AQUA)
+            buttons.add(text("[Top]", AQUA)
                         .clickEvent(ClickEvent.runCommand("/money top"))
                         .hoverEvent(HoverEvent.showText(lines(new Component[] {
-                                        Component.text("/money top" + NamedTextColor.AQUA),
-                                        Component.text("Money highscore.", NamedTextColor.GRAY),
-                                        Component.text("List the richest players.", NamedTextColor.GRAY),
+                                        text("/money top" + AQUA),
+                                        text("Money highscore.", GRAY),
+                                        text("List the richest players.", GRAY),
                                     }))));
         }
-        lines.add(Component.join(JoinConfiguration.separator(Component.space()), buttons));
-        lines.add(Component.empty());
+        if (!buttons.isEmpty()) {
+            lines.add(join(separator(space()), buttons));
+        }
+        lines.add(empty());
         player.sendMessage(lines(lines));
     }
 

@@ -53,14 +53,12 @@ public final class AdminCommand extends AbstractCommand<MoneyPlugin> {
             .senderCaller(this::round);
     }
 
-    private boolean get(CommandSender sender, String[] args) {
+    protected boolean get(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
-        final PlayerCache owner = PlayerCache.forName(args[0]);
-        if (owner == null) {
-            throw new CommandWarn("Player not found: " + args[0]);
-        }
-        double amount = plugin.getMoney(owner.uuid);
-        sender.sendMessage(text(owner.name + " has " + plugin.formatMoney(amount), YELLOW));
+        final PlayerCache owner = PlayerCache.require(args[0]);
+        plugin.getMoneyAsync(owner.uuid, amount -> {
+                sender.sendMessage(text(owner.name + " has " + plugin.formatMoney(amount), YELLOW));
+            });
         return true;
     }
 

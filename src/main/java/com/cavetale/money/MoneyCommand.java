@@ -21,14 +21,17 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
     @Override
     protected void onEnable() {
         rootNode.addChild("top").arguments("[page]")
+            .permission("money.top")
             .description("Richest Player List")
             .completers(CommandArgCompleter.integer(i -> i > 0))
             .senderCaller(this::top);
         rootNode.addChild("log").arguments("[page]")
+            .permission("money.log")
             .description("View Transaction Log")
             .completers(CommandArgCompleter.integer(i -> i > 0))
             .playerCaller(this::log);
         rootNode.addChild("send").arguments("<player> <amount>")
+            .permission("money.send")
             .description("Send someone Money")
             .completers(CommandArgCompleter.NULL,
                         CommandArgCompleter.integer(i -> i > 0))
@@ -37,6 +40,9 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
     }
 
     private boolean money(Player player, String[] args) {
+        if (args.length == 1 && player.hasPermission("money.other")) {
+            return plugin.adminCommand.get(player, args);
+        }
         if (args.length != 0) return false;
         plugin.moneyInfo(player);
         PluginPlayerEvent.Name.USE_MONEY.call(plugin, player);
