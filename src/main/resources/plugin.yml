@@ -26,23 +26,23 @@ permissions:
 
   money.money:
     description: use /money
-    default: false
+    default: op
 
   money.top:
     description: use /money top
-    default: false
+    default: op
 
   money.log:
     description: use /money log
-    default: false
+    default: op
 
   money.send:
     description: use /money send
-    default: false
+    default: op
 
   money.other:
     description: use /money <player> on other players
-    default: false
+    default: op
 
   money.player:
     description: All player permissions
@@ -56,5 +56,3 @@ permissions:
   money.admin:
     description: Use admin commands
     default: op
-    children:
-      money.other: true
