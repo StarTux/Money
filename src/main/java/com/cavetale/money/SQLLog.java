@@ -1,5 +1,6 @@
 package com.cavetale.money;
 
+import com.winthier.sql.SQLRow;
 import java.util.Date;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -11,7 +12,7 @@ import org.bukkit.plugin.Plugin;
 
 @Data @Table(name = "logs",
              indexes = @Index(columnList = "owner"))
-public final class SQLLog {
+public final class SQLLog implements SQLRow {
     private static final int MAX_COMMENT_LENGTH = 255;
     @Id private Integer id;
     @Column(nullable = false) private Date time;

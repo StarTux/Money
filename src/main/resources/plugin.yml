@@ -1,10 +1,13 @@
 main: com.cavetale.money.MoneyPlugin
 name: Money
-description: Money management
-author: StarTux
+
 version: 0.1
 api-version: 1.18
+
+description: Money management
+author: StarTux
 website: https://github.com/StarTux/Money
+
 depend: [Core, SQL, PlayerCache, Sidebar]
 softdepend: [Vault]
 
