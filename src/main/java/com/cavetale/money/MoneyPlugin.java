@@ -39,6 +39,7 @@ public final class MoneyPlugin extends JavaPlugin {
     protected final AdminCommand adminCommand = new AdminCommand(this);
     protected final EventListener eventListener = new EventListener(this);
     protected final Map<UUID, Cached> cache = new HashMap<>();
+    private final CoreMoney coreMoney = new CoreMoney(this);
 
     @Override
     public void onLoad() {
@@ -49,6 +50,7 @@ public final class MoneyPlugin extends JavaPlugin {
         } else {
             getLogger().warning("Vault backend NOT registered!");
         }
+        coreMoney.register();
     }
 
     @Override
@@ -64,6 +66,11 @@ public final class MoneyPlugin extends JavaPlugin {
             createAccountAsync(player);
             createCache(player);
         }
+    }
+
+    @Override
+    public void onDisable() {
+        coreMoney.unregister();
     }
 
     private static Component lines(ComponentLike... lines) {
@@ -165,9 +172,9 @@ public final class MoneyPlugin extends JavaPlugin {
      *
      * @return true if transaction was successful, false otherwise.
      */
-    public void giveMoney(UUID owner, double amount) {
+    public boolean giveMoney(UUID owner, double amount) {
         testAmount(amount);
-        if (amount < 0.01) return;
+        if (amount < 0.01) return false;
         String tableName = db.getTable(SQLAccount.class).getTableName();
         String sql = String.format("INSERT INTO `%s` (owner, money)"
                                    + " VALUES ('%s', %.2f)"
@@ -178,6 +185,27 @@ public final class MoneyPlugin extends JavaPlugin {
                     cached.money = newMoney;
                     cached.showProgress = true;
                 }));
+        return true;
+    }
+
+    public void giveMoneyAsync(UUID owner, double amount, Consumer<Boolean> callback) {
+        testAmount(amount);
+        if (amount < 0.01) {
+            callback.accept(false);
+            return;
+        }
+        String tableName = db.getTable(SQLAccount.class).getTableName();
+        String sql = String.format("INSERT INTO `%s` (owner, money)"
+                                   + " VALUES ('%s', %.2f)"
+                                   + " ON DUPLICATE KEY UPDATE money = ROUND(money + %.2f, 2)",
+                                   tableName, owner, amount, amount);
+        db.executeUpdateAsync(sql, res -> {
+                getMoneyAsync(owner, newMoney -> applyCache(owner, cached -> {
+                            cached.money = newMoney;
+                            cached.showProgress = true;
+                        }));
+                callback.accept(true);
+            });
     }
 
     /**
@@ -188,7 +216,7 @@ public final class MoneyPlugin extends JavaPlugin {
      */
     public boolean takeMoney(UUID owner, double amount) {
         testAmount(amount);
-        if (amount < 0.01) return true;
+        if (amount < 0.01) return false;
         String tableName = db.getTable(SQLAccount.class).getTableName();
         String sql = String.format("UPDATE `%s` SET money = ROUND(money - %.2f, 2)"
                                    + " WHERE owner = '%s' AND money >= %.2f",
@@ -199,6 +227,25 @@ public final class MoneyPlugin extends JavaPlugin {
                     cached.showProgress = true;
                 }));
         return result != 0;
+    }
+
+    public void takeMoneyAsync(UUID owner, double amount, Consumer<Boolean> callback) {
+        testAmount(amount);
+        if (amount < 0.01) {
+            callback.accept(false);
+            return;
+        }
+        String tableName = db.getTable(SQLAccount.class).getTableName();
+        String sql = String.format("UPDATE `%s` SET money = ROUND(money - %.2f, 2)"
+                                   + " WHERE owner = '%s' AND money >= %.2f",
+                                   tableName, amount, owner, amount);
+        db.executeUpdateAsync(sql, result -> {
+                getMoneyAsync(owner, newMoney -> applyCache(owner, cached -> {
+                            cached.money = newMoney;
+                            cached.showProgress = true;
+                        }));
+                callback.accept(result != 0);
+            });
     }
 
     private void testAmount(double amount) {
