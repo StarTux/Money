@@ -34,7 +34,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 public final class MoneyPlugin extends JavaPlugin {
     @Getter protected static MoneyPlugin instance;
     protected final SQLDatabase db = new SQLDatabase(this);
-    protected DecimalFormat numberFormat;
+    protected final DecimalFormat numberFormat = new DecimalFormat("#,###.00", new DecimalFormatSymbols(Locale.US));
     protected final MoneyCommand moneyCommand = new MoneyCommand(this);
     protected final AdminCommand adminCommand = new AdminCommand(this);
     protected final EventListener eventListener = new EventListener(this);
@@ -44,6 +44,7 @@ public final class MoneyPlugin extends JavaPlugin {
     @Override
     public void onLoad() {
         instance = this;
+        numberFormat.setParseBigDecimal(true);
         if (Bukkit.getPluginManager().getPlugin("Vault") != null) {
             MoneyVault.register(this);
             getLogger().info("Vault backend registered");
@@ -55,11 +56,9 @@ public final class MoneyPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        db.registerTables(SQLAccount.class, SQLLog.class);
+        db.registerTables(List.of(SQLAccount.class, SQLLog.class));
         db.createAllTables();
         getServer().getPluginManager().registerEvents(eventListener, this);
-        numberFormat = new DecimalFormat("#,###.00", new DecimalFormatSymbols(Locale.US));
-        numberFormat.setParseBigDecimal(true);
         moneyCommand.enable();
         adminCommand.enable();
         for (Player player : getServer().getOnlinePlayers()) {
