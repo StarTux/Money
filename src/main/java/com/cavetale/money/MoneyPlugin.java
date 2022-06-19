@@ -160,6 +160,8 @@ public final class MoneyPlugin extends JavaPlugin {
                                    tableName, owner, amount, amount);
         db.executeUpdate(sql);
         getMoneyAsync(owner, newMoney -> applyCache(owner, cached -> {
+                    cached.min = Math.min(cached.min, newMoney);
+                    cached.max = Math.max(cached.max, newMoney);
                     cached.money = newMoney;
                     cached.showProgress = true;
                 }));
@@ -181,6 +183,8 @@ public final class MoneyPlugin extends JavaPlugin {
                                    tableName, owner, amount, amount);
         db.executeUpdate(sql);
         getMoneyAsync(owner, newMoney -> applyCache(owner, cached -> {
+                    cached.min = Math.min(cached.min, newMoney);
+                    cached.max = Math.max(cached.max, newMoney);
                     cached.money = newMoney;
                     cached.showProgress = true;
                 }));
@@ -200,6 +204,8 @@ public final class MoneyPlugin extends JavaPlugin {
                                    tableName, owner, amount, amount);
         db.executeUpdateAsync(sql, res -> {
                 getMoneyAsync(owner, newMoney -> applyCache(owner, cached -> {
+                            cached.min = Math.min(cached.min, newMoney);
+                            cached.max = Math.max(cached.max, newMoney);
                             cached.money = newMoney;
                             cached.showProgress = true;
                         }));
@@ -222,6 +228,8 @@ public final class MoneyPlugin extends JavaPlugin {
                                    tableName, amount, owner, amount);
         final int result = db.executeUpdate(sql);
         getMoneyAsync(owner, newMoney -> applyCache(owner, cached -> {
+                    cached.min = Math.min(cached.min, newMoney);
+                    cached.max = Math.max(cached.max, newMoney);
                     cached.money = newMoney;
                     cached.showProgress = true;
                 }));
@@ -240,6 +248,8 @@ public final class MoneyPlugin extends JavaPlugin {
                                    tableName, amount, owner, amount);
         db.executeUpdateAsync(sql, result -> {
                 getMoneyAsync(owner, newMoney -> applyCache(owner, cached -> {
+                            cached.min = Math.min(cached.min, newMoney);
+                            cached.max = Math.max(cached.max, newMoney);
                             cached.money = newMoney;
                             cached.showProgress = true;
                         }));
@@ -284,6 +294,8 @@ public final class MoneyPlugin extends JavaPlugin {
                 if (cache.containsKey(uuid)) return;
                 Cached cached = new Cached();
                 cached.money = amount;
+                cached.min = amount;
+                cached.max = amount;
                 cached.displayMoney = amount;
                 cache.put(uuid, cached);
             });

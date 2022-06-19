@@ -1,6 +1,7 @@
 package com.cavetale.money;
 
 import com.cavetale.core.money.Money;
+import com.cavetale.mytems.item.coin.Coin;
 import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -198,7 +199,7 @@ public final class CoreMoney implements Money {
 
     @Override
     public Component toComponent(double amount) {
-        return Component.text(format(amount));
+        return Coin.format(amount);
     }
 
     /**

@@ -1,11 +1,14 @@
 package com.cavetale.money;
 
-import com.cavetale.sidebar.PlayerSidebarEvent;
-import com.cavetale.sidebar.Priority;
+import com.cavetale.core.event.hud.PlayerHudEvent;
+import com.cavetale.core.event.hud.PlayerHudPriority;
+import com.cavetale.mytems.item.coin.Coin;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.ChatColor;
@@ -18,10 +21,16 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.util.ChatPaginator;
+import static com.cavetale.core.font.Unicode.tiny;
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @RequiredArgsConstructor
 public final class EventListener implements Listener {
-    final MoneyPlugin plugin;
+    private static final Component PREFIX = text(tiny("money "), GRAY);
+    private final MoneyPlugin plugin;
 
     @EventHandler(priority = EventPriority.LOWEST)
     protected void onPlayerJoin(PlayerJoinEvent event) {
@@ -37,24 +46,30 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    protected void onPlayerSidebar(PlayerSidebarEvent event) {
+    protected void onPlayerHud(PlayerHudEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         Cached cached = plugin.cache.get(uuid);
         if (cached == null) return;
+        event.footer(PlayerHudPriority.LOWEST,
+                     List.of(join(noSeparators(), PREFIX, Coin.format(cached.displayMoney))));
         if (!cached.showProgress && !cached.showTimed) return;
         List<Component> lines = new ArrayList<>();
         long now = System.currentTimeMillis();
         if (cached.showProgress) {
-            Component moneyMessage = Component.text("/money ", NamedTextColor.YELLOW)
-                .append(Component.text(plugin.formatMoney(cached.displayMoney), NamedTextColor.GOLD));
-            lines.add(moneyMessage);
-            player.sendActionBar(moneyMessage);
-            double difference = cached.money - cached.displayMoney;
+            Component moneyMessage = join(noSeparators(), PREFIX, Coin.format(cached.displayMoney));
+            final double span = cached.max - cached.min;
+            cached.progress = span >= 0.01
+                ? (cached.displayMoney - cached.min) / span
+                : 1.0;
+            event.bossbar(PlayerHudPriority.UPDATE, moneyMessage, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS, Set.of(), (float) cached.progress);
+            final double difference = cached.money - cached.displayMoney;
             if (Math.abs(difference) < 1.0) {
                 cached.showProgress = false;
                 cached.showTimed = true;
                 cached.showUntil = now + 10000L;
+                cached.min = cached.money;
+                cached.max = cached.money;
             } else {
                 final double distance;
                 if ((difference > 0) != (cached.distance > 0) || Math.abs(difference) > Math.abs(cached.distance)) {
@@ -75,24 +90,23 @@ public final class EventListener implements Listener {
                 cached.showTimed = false;
                 return;
             }
-            Component moneyMessage = Component.text("/money ", NamedTextColor.YELLOW)
-                .append(Component.text(plugin.formatMoney(cached.money), NamedTextColor.GOLD));
-            lines.add(moneyMessage);
+            Component moneyMessage = join(noSeparators(), PREFIX, Coin.format(cached.money));
+            event.bossbar(PlayerHudPriority.UPDATE, moneyMessage, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS, Set.of(), (float) cached.progress);
         }
         cached.logs.removeIf(log -> now > log.getTime().getTime() + 10000L);
         for (SQLLog log : cached.logs) {
             String format = plugin.numberFormat.format(log.getMoney());
             lines.add(log.getMoney() > 0
-                      ? Component.text("+" + format, NamedTextColor.GREEN)
-                      : Component.text(format, NamedTextColor.RED));
+                      ? text("+" + format, GREEN)
+                      : text(format, RED));
             if (log.getComment() != null) {
                 for (String line : ChatPaginator.wordWrap(log.getComment(), 22)) {
-                    lines.add(Component.text(" " + ChatColor.stripColor(line), NamedTextColor.GRAY));
+                    lines.add(text(" " + ChatColor.stripColor(line), GRAY));
                 }
             }
             cached.showTimed = true;
             cached.showUntil = now + 10000L;
         }
-        event.add(plugin, Priority.LOWEST, lines);
+        event.sidebar(PlayerHudPriority.LOWEST, lines);
     }
 }

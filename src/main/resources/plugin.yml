@@ -8,7 +8,7 @@ description: Money management
 author: StarTux
 website: https://github.com/StarTux/Money
 
-depend: [Core, SQL, PlayerCache, Sidebar]
+depend: [Core, SQL, PlayerCache, Mytems]
 softdepend: [Vault]
 
 commands:

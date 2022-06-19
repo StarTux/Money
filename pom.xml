@@ -52,10 +52,10 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- Sidebar -->
+    <!-- Mytems -->
     <dependency>
-      <groupId>com.cavetale.sidebar</groupId>
-      <artifactId>sidebar</artifactId>
+      <groupId>com.cavetale.mytems</groupId>
+      <artifactId>mytems</artifactId>
       <version>0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
