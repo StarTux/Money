@@ -1,6 +1,7 @@
 package com.cavetale.money;
 
 import com.cavetale.money.vault.MoneyVault;
+import com.cavetale.mytems.item.coin.Coin;
 import com.winthier.sql.SQLDatabase;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -27,6 +28,7 @@ import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
@@ -81,10 +83,9 @@ public final class MoneyPlugin extends JavaPlugin {
     }
 
     public void moneyInfo(Player player, double money) {
-        String format = formatMoney(money);
         List<Component> lines = new ArrayList<>();
         lines.add(empty());
-        lines.add(text("You have " + format, GREEN));
+        lines.add(join(noSeparators(), text("You have "), Coin.format(money)).insertion(numberFormat.format(money)));
         List<Component> buttons = new ArrayList<>();
         if (player.hasPermission("money.send")) {
             buttons.add(text("[Send]", GREEN)

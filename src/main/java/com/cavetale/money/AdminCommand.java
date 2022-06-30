@@ -57,7 +57,8 @@ public final class AdminCommand extends AbstractCommand<MoneyPlugin> {
         if (args.length != 1) return false;
         final PlayerCache owner = PlayerCache.require(args[0]);
         plugin.getMoneyAsync(owner.uuid, amount -> {
-                sender.sendMessage(text(owner.name + " has " + plugin.formatMoney(amount), YELLOW));
+                sender.sendMessage(text(owner.name + " has " + plugin.formatMoney(amount), YELLOW)
+                                   .insertion(plugin.numberFormat.format(amount)));
             });
         return true;
     }
