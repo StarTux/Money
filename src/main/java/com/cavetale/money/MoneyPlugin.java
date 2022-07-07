@@ -3,13 +3,9 @@ package com.cavetale.money;
 import com.cavetale.core.connect.Connect;
 import com.cavetale.core.util.Json;
 import com.cavetale.money.vault.MoneyVault;
-import com.cavetale.mytems.item.coin.Coin;
 import com.winthier.sql.SQLDatabase;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -17,22 +13,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.Getter;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.ComponentLike;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import static net.kyori.adventure.text.Component.empty;
-import static net.kyori.adventure.text.Component.join;
-import static net.kyori.adventure.text.Component.newline;
-import static net.kyori.adventure.text.Component.space;
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
-import static net.kyori.adventure.text.JoinConfiguration.separator;
-import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @Getter
 public final class MoneyPlugin extends JavaPlugin {
@@ -76,65 +60,15 @@ public final class MoneyPlugin extends JavaPlugin {
         coreMoney.unregister();
     }
 
-    private static Component lines(ComponentLike... lines) {
-        return join(separator(newline()), lines);
-    }
-
-    private static Component lines(Iterable<? extends ComponentLike> lines) {
-        return join(separator(newline()), lines);
-    }
-
-    public void moneyInfo(Player player, double money) {
-        List<Component> lines = new ArrayList<>();
-        lines.add(empty());
-        lines.add(join(noSeparators(), text("You have "), Coin.format(money)).insertion(numberFormat.format(money)));
-        List<Component> buttons = new ArrayList<>();
-        if (player.hasPermission("money.send")) {
-            buttons.add(text("[Send]", GREEN)
-                        .clickEvent(ClickEvent.suggestCommand("/money send "))
-                        .hoverEvent(HoverEvent.showText(lines(new Component[] {
-                                        text("/money send <player> <amount>", GREEN),
-                                        text("Send somebody money", GRAY),
-                                    }))));
-        }
-        if (player.hasPermission("money.log")) {
-            buttons.add(text("[Log]", YELLOW)
-                        .clickEvent(ClickEvent.runCommand("/money log"))
-                        .hoverEvent(HoverEvent.showText(lines(new Component[] {
-                                        text("/money log <page>", YELLOW),
-                                        text("Check your transaction", GRAY),
-                                        text("history.", GRAY),
-                                    }))));
-        }
-        if (player.hasPermission("money.top")) {
-            buttons.add(text("[Top]", AQUA)
-                        .clickEvent(ClickEvent.runCommand("/money top"))
-                        .hoverEvent(HoverEvent.showText(lines(new Component[] {
-                                        text("/money top" + AQUA),
-                                        text("Money highscore.", GRAY),
-                                        text("List the richest players.", GRAY),
-                                    }))));
-        }
-        if (!buttons.isEmpty()) {
-            lines.add(join(separator(space()), buttons));
-        }
-        lines.add(empty());
-        player.sendMessage(lines(lines));
-    }
-
-    public void moneyInfo(Player player) {
-        getMoneyAsync(player.getUniqueId(), amount -> moneyInfo(player, amount));
-    }
-
-    public String formatMoney(double amount) {
+    public String formatMoneyRaw(double amount) {
         String format = numberFormat.format(amount);
         if (format.endsWith(".00")) format = format.substring(0, format.length() - 3);
         if (format.isEmpty()) format = "0";
-        return "\u26C3" + format;
+        return format;
     }
 
-    public String formatDate(Date date) {
-        return new SimpleDateFormat("YY/MMM/dd HH:mm").format(date);
+    public String formatMoney(double amount) {
+        return "\u26C3" + formatMoneyRaw(amount);
     }
 
     public double getMoney(UUID owner) {

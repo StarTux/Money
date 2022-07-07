@@ -5,6 +5,7 @@ import com.cavetale.core.command.CommandArgCompleter;
 import com.cavetale.core.command.CommandWarn;
 import com.winthier.playercache.PlayerCache;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import org.bukkit.command.CommandSender;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.space;
@@ -13,6 +14,8 @@ import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public final class AdminCommand extends AbstractCommand<MoneyPlugin> {
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("YYYY MMM dd HH:mm");
+
     protected AdminCommand(final MoneyPlugin plugin) {
         super(plugin, "moneyadmin");
     }
@@ -167,7 +170,7 @@ public final class AdminCommand extends AbstractCommand<MoneyPlugin> {
                         String comment = log.getComment();
                         if (comment == null) comment = "N/A";
                         sender.sendMessage(join(separator(space()),
-                                                text(plugin.formatDate(log.getTime()), GRAY),
+                                                text(DATE_FORMAT.format(log.getTime()), GRAY),
                                                 text(plugin.numberFormat.format(log.getMoney()), YELLOW),
                                                 text(comment, GRAY)));
                     }
