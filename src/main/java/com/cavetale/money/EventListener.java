@@ -1,7 +1,9 @@
 package com.cavetale.money;
 
+import com.cavetale.core.event.connect.ConnectMessageEvent;
 import com.cavetale.core.event.hud.PlayerHudEvent;
 import com.cavetale.core.event.hud.PlayerHudPriority;
+import com.cavetale.core.util.Json;
 import com.cavetale.mytems.item.coin.Coin;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,10 +55,9 @@ public final class EventListener implements Listener {
         event.footer(PlayerHudPriority.LOWEST,
                      List.of(join(noSeparators(), PREFIX, Coin.format(cached.displayMoney))));
         if (!cached.showProgress && !cached.showTimed) return;
-        List<Component> lines = new ArrayList<>();
         long now = System.currentTimeMillis();
+        Component moneyMessage = join(noSeparators(), PREFIX, Coin.format(cached.displayMoney));
         if (cached.showProgress) {
-            Component moneyMessage = join(noSeparators(), PREFIX, Coin.format(cached.displayMoney));
             final double span = cached.max - cached.min;
             cached.progress = span >= 0.01
                 ? (cached.displayMoney - cached.min) / span
@@ -89,10 +90,11 @@ public final class EventListener implements Listener {
                 cached.showTimed = false;
                 return;
             }
-            Component moneyMessage = join(noSeparators(), PREFIX, Coin.format(cached.money));
             event.bossbar(PlayerHudPriority.UPDATE, moneyMessage, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS, Set.of(), (float) cached.progress);
         }
         cached.logs.removeIf(log -> now > log.getTime().getTime() + 10000L);
+        List<Component> lines = new ArrayList<>();
+        lines.add(moneyMessage);
         for (SQLLog log : cached.logs) {
             String format = plugin.numberFormat.format(log.getMoney());
             lines.add(log.getMoney() > 0
@@ -107,5 +109,23 @@ public final class EventListener implements Listener {
             cached.showUntil = now + 10000L;
         }
         event.sidebar(PlayerHudPriority.LOWEST, lines);
+    }
+
+    @EventHandler
+    private void onConnectMessage(ConnectMessageEvent event) {
+        if ("money:log".equals(event.getChannel())) {
+            final SQLLog log = Json.deserialize(event.getPayload(), SQLLog.class);
+            final UUID owner = log.getOwner();
+            if (!plugin.cache.containsKey(owner)) return;
+            plugin.getMoneyAsync(owner, newMoney -> plugin.applyCache(owner, cached -> {
+                        cached.min = Math.min(cached.min, newMoney);
+                        cached.max = Math.max(cached.max, newMoney);
+                        cached.money = newMoney;
+                        cached.showProgress = true;
+                        cached.showTimed = true;
+                        cached.showUntil = System.currentTimeMillis() + 10000L;
+                        cached.logs.add(log);
+                    }));
+        }
     }
 }
