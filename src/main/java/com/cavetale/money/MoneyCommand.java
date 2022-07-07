@@ -45,10 +45,9 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
             .permission("money.top")
             .description("Richest Player List")
             .senderCaller(this::top);
-        rootNode.addChild("log").arguments("[page]")
+        rootNode.addChild("log").denyTabCompletion()
             .permission("money.log")
             .description("View Transaction Log")
-            .completers(CommandArgCompleter.integer(i -> i > 0))
             .playerCaller(this::log);
         rootNode.addChild("send").arguments("<player> <amount>")
             .permission("money.send")
@@ -91,7 +90,7 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
             lines.add(join(noSeparators(), VanillaItems.WRITABLE_BOOK, text(" Log", BLUE))
                       .clickEvent(runCommand("/money log"))
                       .hoverEvent(showText(join(separator(newline()),
-                                                text("/money log [page]", BLUE),
+                                                text("/money log", BLUE),
                                                 text("Check your transaction", GRAY),
                                                 text("history", GRAY)))));
         }
