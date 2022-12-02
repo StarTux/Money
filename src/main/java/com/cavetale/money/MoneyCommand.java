@@ -19,11 +19,15 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
+import static com.cavetale.core.font.DefaultFont.bookmarked;
+import static com.cavetale.core.font.Unicode.subscript;
+import static com.cavetale.core.font.Unicode.tiny;
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static net.kyori.adventure.text.event.ClickEvent.runCommand;
@@ -72,11 +76,10 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
         List<Component> lines = new ArrayList<>();
         lines.add(join(noSeparators(), Mytems.KITTY_COIN, text("Money", BLUE, BOLD)));
         lines.add(empty());
-        lines.add(empty());
         lines.add(join(noSeparators(),
-                       text("You have ", GRAY),
-                       Mytems.COPPER_COIN,
-                       text(plugin.formatMoneyRaw(money), GOLD)));
+                       text("You have", GRAY),
+                       newline(),
+                       bookmarked(Coin.format(money))));
         if (player.hasPermission("money.send")) {
             lines.add(empty());
             lines.add(join(noSeparators(), Mytems.TURN_RIGHT, text(" Send", GREEN))
@@ -141,8 +144,8 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
                     money = row.getMoney();
                 }
                 page.add(join(separator(newline()),
-                              join(separator(space()), text(rank, BLUE, BOLD), text(PlayerCache.nameForUuid(row.getOwner()))),
-                              join(noSeparators(), Mytems.COPPER_COIN, text(plugin.formatMoneyRaw(row.getMoney()), GOLD)))
+                              join(noSeparators(), text(subscript("" + rank), DARK_GRAY), text(PlayerCache.nameForUuid(row.getOwner()))),
+                              bookmarked(Coin.format(row.getMoney())))
                          .hoverEvent(showText(join(separator(newline()),
                                                    join(separator(space()), Glyph.toComponent("" + rank),
                                                         text(PlayerCache.nameForUuid(row.getOwner()), GRAY)),
@@ -187,13 +190,11 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
                 if (k >= logs.size()) break;
                 SQLLog log = logs.get(k);
                 List<Component> lines = new ArrayList<>(3);
-                lines.add(join(noSeparators(),
-                               text(BRIEF_DATE_FORMAT.format(log.getTime()), BLUE),
-                               space(),
-                               Mytems.COPPER_COIN,
-                               text(plugin.formatMoneyRaw(log.getMoney()), log.getMoney() >= 0.01 ? GOLD : DARK_RED)));
+                lines.add(bookmarked(textOfChildren(Coin.format(log.getMoney()),
+                                                    space(),
+                                                    text(BRIEF_DATE_FORMAT.format(log.getTime()), DARK_GRAY))));
                 if (log.getComment() != null) {
-                    lines.add(text(log.getComment(), GRAY, ITALIC));
+                    lines.add(text(tiny(log.getComment()), log.getMoney() >= 0.0 ? DARK_AQUA : DARK_RED));
                 }
                 List<Component> tooltip = new ArrayList<>(3);
                 tooltip.add(text(DATE_FORMAT.format(log.getTime()), BLUE));
