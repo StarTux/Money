@@ -113,6 +113,7 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
                     bookMeta.pages(List.of(join(separator(newline()), lines)));
                 }
             });
+        player.closeInventory();
         player.openBook(book);
     }
 
@@ -162,6 +163,7 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
                         bookMeta.pages(pages);
                     }
                 });
+            player.closeInventory();
             player.openBook(book);
         } else {
             sender.sendMessage(join(separator(newline()), pages));
@@ -214,6 +216,7 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
                     bookMeta.pages(pages);
                 }
             });
+        player.closeInventory();
         player.openBook(book);
     }
 
