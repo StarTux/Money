@@ -14,6 +14,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -33,11 +34,13 @@ import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static net.kyori.adventure.text.event.ClickEvent.runCommand;
 import static net.kyori.adventure.text.event.HoverEvent.showText;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextColor.color;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
 public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
     private static final SimpleDateFormat BRIEF_DATE_FORMAT = new SimpleDateFormat("MMM d");
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("YYYY MMM d HH:mm:ss");
+    private static final TextColor BOOKMARK = color(0x333333);
 
     protected MoneyCommand(final MoneyPlugin plugin) {
         super(plugin, "money");
@@ -79,7 +82,7 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
         lines.add(join(noSeparators(),
                        text("You have", GRAY),
                        newline(),
-                       bookmarked(Coin.format(money))));
+                       bookmarked(BOOKMARK, Coin.format(money))));
         if (player.hasPermission("money.send")) {
             lines.add(empty());
             lines.add(join(noSeparators(), Mytems.TURN_RIGHT, text(" Send", GREEN))
@@ -146,7 +149,7 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
                 }
                 page.add(join(separator(newline()),
                               join(noSeparators(), text(subscript("" + rank), DARK_GRAY), text(PlayerCache.nameForUuid(row.getOwner()))),
-                              bookmarked(Coin.format(row.getMoney())))
+                              bookmarked(BOOKMARK, Coin.format(row.getMoney())))
                          .hoverEvent(showText(join(separator(newline()),
                                                    join(separator(space()), Glyph.toComponent("" + rank),
                                                         text(PlayerCache.nameForUuid(row.getOwner()), GRAY)),
@@ -192,9 +195,9 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
                 if (k >= logs.size()) break;
                 SQLLog log = logs.get(k);
                 List<Component> lines = new ArrayList<>(3);
-                lines.add(bookmarked(textOfChildren(Coin.format(log.getMoney()),
-                                                    space(),
-                                                    text(BRIEF_DATE_FORMAT.format(log.getTime()), DARK_GRAY))));
+                lines.add(bookmarked(BOOKMARK, textOfChildren(Coin.format(log.getMoney()),
+                                                              space(),
+                                                              text(BRIEF_DATE_FORMAT.format(log.getTime()), DARK_GRAY))));
                 if (log.getComment() != null) {
                     lines.add(text(tiny(log.getComment()), log.getMoney() >= 0.0 ? DARK_AQUA : DARK_RED));
                 }
