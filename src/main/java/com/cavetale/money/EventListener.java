@@ -23,9 +23,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.util.ChatPaginator;
 import static com.cavetale.core.font.Unicode.tiny;
-import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
+import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @RequiredArgsConstructor
@@ -52,11 +51,10 @@ public final class EventListener implements Listener {
         UUID uuid = player.getUniqueId();
         Cached cached = plugin.cache.get(uuid);
         if (cached == null) return;
-        event.footer(PlayerHudPriority.LOWEST,
-                     List.of(join(noSeparators(), PREFIX, Coin.format(cached.displayMoney))));
+        event.footer(PlayerHudPriority.LOWEST, List.of(textOfChildren(PREFIX, Coin.formatAnimated(cached.displayMoney))));
         if (!cached.showProgress && !cached.showTimed) return;
         long now = System.currentTimeMillis();
-        Component moneyMessage = join(noSeparators(), PREFIX, Coin.format(cached.displayMoney));
+        Component moneyMessage = textOfChildren(PREFIX, Coin.formatAnimated(cached.displayMoney));
         if (cached.showProgress) {
             final double span = cached.max - cached.min;
             cached.progress = span >= 0.01
