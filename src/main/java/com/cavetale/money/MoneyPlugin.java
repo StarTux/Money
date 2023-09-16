@@ -1,6 +1,7 @@
 package com.cavetale.money;
 
 import com.cavetale.core.connect.Connect;
+import com.cavetale.core.connect.ServerGroup;
 import com.cavetale.core.util.Json;
 import com.cavetale.money.vault.MoneyVault;
 import com.winthier.sql.SQLDatabase;
@@ -246,6 +247,6 @@ public final class MoneyPlugin extends JavaPlugin {
                 cached.showTimed = true;
                 cached.showUntil = System.currentTimeMillis() + 10000L;
             });
-        Connect.get().broadcastMessage("money:log", Json.serialize(log));
+        Connect.get().broadcastMessage(ServerGroup.current(), "money:log", Json.serialize(log));
     }
 }
