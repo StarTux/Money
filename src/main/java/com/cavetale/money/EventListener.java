@@ -12,7 +12,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
-import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
@@ -100,7 +99,7 @@ public final class EventListener implements Listener {
                       : text(format, RED));
             if (log.getComment() != null) {
                 for (String line : ChatPaginator.wordWrap(log.getComment(), 22)) {
-                    lines.add(text(" " + ChatColor.stripColor(line), GRAY));
+                    lines.add(text(" " + line, GRAY));
                 }
             }
             cached.showTimed = true;
