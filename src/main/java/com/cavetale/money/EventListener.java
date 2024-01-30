@@ -59,7 +59,7 @@ public final class EventListener implements Listener {
             cached.progress = span >= 0.01
                 ? (cached.displayMoney - cached.min) / span
                 : 1.0;
-            event.bossbar(PlayerHudPriority.HIGH, moneyMessage, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS, Set.of(), (float) cached.progress);
+            event.bossbar(PlayerHudPriority.LOWEST, moneyMessage, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS, Set.of(), (float) cached.progress);
             final double difference = cached.money - cached.displayMoney;
             if (Math.abs(difference) < 1.0) {
                 cached.showProgress = false;
