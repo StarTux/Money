@@ -10,9 +10,15 @@ import com.cavetale.mytems.item.coin.Coin;
 import com.cavetale.mytems.item.font.Glyph;
 import com.winthier.playercache.PlayerCache;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Material;
@@ -28,7 +34,6 @@ import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static net.kyori.adventure.text.event.ClickEvent.runCommand;
@@ -38,9 +43,10 @@ import static net.kyori.adventure.text.format.TextColor.color;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
 public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
-    private static final SimpleDateFormat BRIEF_DATE_FORMAT = new SimpleDateFormat("MMM d");
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("YYYY MMM d HH:mm:ss");
+    private static final DateTimeFormatter BRIEF_DATE_FORMAT = DateTimeFormatter.ofPattern("MMM d YYYY");
+    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("YYYY MMM d HH:mm:ss");
     private static final TextColor BOOKMARK = color(0x333333);
+    private static final ZoneId ZONE_ID = ZoneId.of("UTC-11");
 
     protected MoneyCommand(final MoneyPlugin plugin) {
         super(plugin, "money");
@@ -78,7 +84,6 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
     private void moneyInfo(Player player, double money) {
         List<Component> lines = new ArrayList<>();
         lines.add(join(noSeparators(), Mytems.KITTY_COIN, text("Money", BLUE, BOLD)));
-        lines.add(empty());
         lines.add(join(noSeparators(),
                        text("You have", GRAY),
                        newline(),
@@ -177,7 +182,6 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
         plugin.db.find(SQLLog.class)
             .eq("owner", player.getUniqueId())
             .orderByDescending("time")
-            .limit(50 * 4)
             .findListAsync(logs -> logCallback(player, logs));
     }
 
@@ -186,23 +190,81 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
             player.sendMessage(text("No logs to show", RED));
             return;
         }
+        // Sort by date
+        final var dateMap = new HashMap<LocalDate, List<SQLLog>>();
+        for (SQLLog log : logs) {
+            final List<SQLLog> list = dateMap.computeIfAbsent(LocalDate.ofInstant(log.getTime().toInstant(), ZONE_ID), _date -> new ArrayList<>());
+            boolean didMerge = false;
+            for (SQLLog oldLog : list) {
+                if (!Objects.equals(log.getComment(), oldLog.getComment()) || !Objects.equals(log.getPlugin(), oldLog.getPlugin())) {
+                    continue;
+                }
+                oldLog.setMoney(log.getMoney() + oldLog.getMoney());
+                didMerge = true;
+                break;
+            }
+            if (didMerge) continue;
+            list.add(log);
+        }
+        final List<LocalDate> dateList = new ArrayList<>(dateMap.keySet());
+        dateList.sort(Comparator.<LocalDate>naturalOrder().reversed());
+        // Build pages
+        final long now = System.currentTimeMillis();
         final int perPage = 5;
         List<Component> pages = new ArrayList<>();
-        for (int i = 0; i < logs.size(); i += perPage) {
+        for (LocalDate date : dateList) {
+            final List<SQLLog> dailyLogs = dateMap.get(date);
             List<Component> page = new ArrayList<>();
-            for (int j = 0; j < perPage; j += 1) {
-                final int k = i + j;
-                if (k >= logs.size()) break;
-                SQLLog log = logs.get(k);
-                List<Component> lines = new ArrayList<>(3);
-                lines.add(bookmarked(BOOKMARK, textOfChildren(Coin.format(log.getMoney()),
-                                                              space(),
-                                                              text(BRIEF_DATE_FORMAT.format(log.getTime()), DARK_GRAY))));
-                if (log.getComment() != null) {
-                    lines.add(text(tiny(log.getComment()), log.getMoney() >= 0.0 ? DARK_AQUA : DARK_RED));
+            page.add(text(BRIEF_DATE_FORMAT.format(date), DARK_GRAY));
+            page.add(empty());
+            for (SQLLog log : dailyLogs) {
+                if (page.size() >= 10) {
+                    if (pages.size() >= 50) break;
+                    pages.add(join(separator(newline()), page));
+                    page.clear();
                 }
-                List<Component> tooltip = new ArrayList<>(3);
-                tooltip.add(text(DATE_FORMAT.format(log.getTime()), BLUE));
+                List<Component> lines = new ArrayList<>(2);
+                lines.add(bookmarked(BOOKMARK, Coin.format(log.getMoney())));
+                if (log.getComment() != null) {
+                    String comment = log.getComment();
+                    final int max = 18;
+                    if (comment.length() > max) {
+                        comment = comment.substring(0, max) + "...";
+                    }
+                    lines.add(text(tiny(comment), log.getMoney() >= 0.0 ? DARK_AQUA : DARK_RED));
+                }
+                // Build the tooltip
+                List<Component> tooltip = new ArrayList<>(4);
+                // Add the exact date
+                tooltip.add(text(DATE_TIME_FORMAT.format(LocalDateTime.ofInstant(log.getTime().toInstant(), ZONE_ID)), BLUE));
+                // Print how long ago
+                List<Component> ago = new ArrayList<>();
+                final long millis = now - log.getTime().getTime();
+                final long seconds = millis / 1000L;
+                final long minutes = seconds / 60L;
+                final long hours = minutes / 60L;
+                final long days = hours / 24L;
+                if (days > 0) {
+                    ago.add(text(days, GRAY));
+                    ago.add(text("d ", DARK_GRAY));
+                }
+                if (hours > 0) {
+                    ago.add(text(hours % 24L, GRAY));
+                    ago.add(text("h ", DARK_GRAY));
+                }
+                if (days == 0) {
+                    if (minutes > 0) {
+                        ago.add(text(minutes % 60L, GRAY));
+                        ago.add(text("m ", DARK_GRAY));
+                    }
+                    if (hours == 0) {
+                        ago.add(text(seconds % 60L, GRAY));
+                        ago.add(text("s ", DARK_GRAY));
+                    }
+                }
+                ago.add(text("ago", GRAY, ITALIC));
+                tooltip.add(join(noSeparators(), ago));
+                // Add money and comment
                 tooltip.add(Coin.format(log.getMoney()));
                 if (log.getComment() != null) {
                     tooltip.add(text(log.getComment(), GRAY, ITALIC));
@@ -210,6 +272,7 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
                 page.add(join(separator(newline()), lines).hoverEvent(showText(join(separator(newline()), tooltip))));
             }
             pages.add(join(separator(newline()), page));
+            if (pages.size() >= 50) break;
         }
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         book.editMeta(meta -> {
