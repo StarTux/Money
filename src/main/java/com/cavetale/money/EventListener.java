@@ -89,10 +89,10 @@ public final class EventListener implements Listener {
             }
             event.bossbar(PlayerHudPriority.UPDATE, moneyMessage, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS, Set.of(), (float) cached.progress);
         }
-        cached.logs.removeIf(log -> now > log.getTime().getTime() + 10000L);
+        cached.logs.removeIf(log -> now > log.getTime() + 10000L);
         List<Component> lines = new ArrayList<>();
         lines.add(moneyMessage);
-        for (SQLLog log : cached.logs) {
+        for (LogPacket log : cached.logs) {
             String format = plugin.numberFormat.format(log.getMoney());
             lines.add(log.getMoney() > 0
                       ? text("+" + format, GREEN)
@@ -111,7 +111,7 @@ public final class EventListener implements Listener {
     @EventHandler
     private void onConnectMessage(ConnectMessageEvent event) {
         if ("money:log".equals(event.getChannel())) {
-            final SQLLog log = Json.deserialize(event.getPayload(), SQLLog.class);
+            final LogPacket log = Json.deserialize(event.getPayload(), LogPacket.class);
             final UUID owner = log.getOwner();
             if (!plugin.cache.containsKey(owner)) return;
             plugin.getMoneyAsync(owner, newMoney -> plugin.applyCache(owner, cached -> {

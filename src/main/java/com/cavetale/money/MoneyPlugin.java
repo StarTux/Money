@@ -241,12 +241,13 @@ public final class MoneyPlugin extends JavaPlugin {
 
     protected void log(final UUID owner, final double money, final Plugin plugin, final String comment) {
         SQLLog log = new SQLLog(owner, money, plugin, comment);
+        final LogPacket packet = new LogPacket(log);
         db.insertAsync(log, null);
         applyCache(owner, cached -> {
-                cached.logs.add(log);
+                cached.logs.add(packet);
                 cached.showTimed = true;
                 cached.showUntil = System.currentTimeMillis() + 10000L;
             });
-        Connect.get().broadcastMessage(ServerGroup.current(), "money:log", Json.serialize(log));
+        Connect.get().broadcastMessage(ServerGroup.current(), "money:log", Json.serialize(packet));
     }
 }

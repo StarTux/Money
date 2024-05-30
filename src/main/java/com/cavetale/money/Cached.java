@@ -22,7 +22,7 @@ public final class Cached {
     protected boolean showProgress;
     protected boolean showTimed;
     protected long showUntil;
-    protected final List<SQLLog> logs = new ArrayList<>();
+    protected final List<LogPacket> logs = new ArrayList<>();
     protected double min;
     protected double max;
     protected double progress;
