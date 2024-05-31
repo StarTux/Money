@@ -7,6 +7,9 @@ import com.cavetale.money.vault.MoneyVault;
 import com.winthier.sql.SQLDatabase;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -54,6 +57,18 @@ public final class MoneyPlugin extends JavaPlugin {
             createAccountAsync(player);
             createCache(player);
         }
+        pruneLogs();
+    }
+
+    private void pruneLogs() {
+        final Date then = new Date(Instant.now().minus(365L, ChronoUnit.DAYS).toEpochMilli());
+        final int limit = 100_000;
+        db.find(SQLLog.class).lt("time", then).limit(limit).deleteAsync(rt -> {
+                getLogger().info("Deleted " + rt + " logs older than " + then);
+                if (rt >= limit) {
+                    Bukkit.getScheduler().runTaskLater(this, this::pruneLogs, 20L);
+                }
+            });
     }
 
     @Override
