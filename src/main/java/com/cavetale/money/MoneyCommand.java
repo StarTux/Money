@@ -1,5 +1,6 @@
 package com.cavetale.money;
 
+import com.cavetale.core.chat.Chat;
 import com.cavetale.core.command.AbstractCommand;
 import com.cavetale.core.command.CommandArgCompleter;
 import com.cavetale.core.command.CommandWarn;
@@ -305,6 +306,9 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
         }
         if (!plugin.takeMoney(player.getUniqueId(), amount)) {
             throw new CommandWarn("You cannot afford " + plugin.formatMoney(amount) + "!");
+        }
+        if (Chat.doesIgnore(target.uuid, player.getUniqueId())) {
+            throw new CommandWarn("You cannot send money to that player");
         }
         plugin.giveMoney(target.uuid, amount);
         plugin.log(player.getUniqueId(), -amount, plugin, "Sent to " + target.name);
