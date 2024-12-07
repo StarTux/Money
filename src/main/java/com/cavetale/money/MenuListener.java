@@ -11,6 +11,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public final class MenuListener implements Listener {
     public static final String MENU_KEY = "money:money";
+    public static final String MENU_PERMISSION = "money.money";
 
     public void enable() {
         Bukkit.getPluginManager().registerEvents(this, MoneyPlugin.getInstance());
@@ -18,8 +19,11 @@ public final class MenuListener implements Listener {
 
     @EventHandler
     private void onMenuItem(MenuItemEvent event) {
+        if (!event.getPlayer().hasPermission(MENU_PERMISSION)) {
+            return;
+        }
         event.addItem(builder -> builder
-                      .key(MONEY_KEY)
+                      .key(MENU_KEY)
                       .command("money")
                       .icon(Mytems.GOLDEN_COIN.createIcon(List.of(text("Money", GREEN)))));
     }
