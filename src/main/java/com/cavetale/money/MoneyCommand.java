@@ -35,6 +35,7 @@ import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 import static net.kyori.adventure.text.JoinConfiguration.separator;
 import static net.kyori.adventure.text.event.ClickEvent.runCommand;
@@ -84,14 +85,13 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
 
     private void moneyInfo(Player player, double money) {
         List<Component> lines = new ArrayList<>();
-        lines.add(join(noSeparators(), Mytems.KITTY_COIN, text("Money", BLUE, BOLD)));
-        lines.add(join(noSeparators(),
-                       text("You have", GRAY),
-                       newline(),
-                       bookmarked(BOOKMARK, Coin.format(money))));
+        lines.add(textOfChildren(Mytems.KITTY_COIN, text("Money", BLUE, BOLD))
+                  .hoverEvent(showText(text("Back to /menu", GRAY)))
+                  .clickEvent(runCommand("/menu")));
+        lines.add(textOfChildren(text("You have", GRAY), newline(), bookmarked(BOOKMARK, Coin.format(money))));
         if (player.hasPermission("money.send")) {
             lines.add(empty());
-            lines.add(join(noSeparators(), Mytems.TURN_RIGHT, text(" Send", GREEN))
+            lines.add(textOfChildren(Mytems.TURN_RIGHT, text(" Send", GREEN))
                       .clickEvent(runCommand("/money send"))
                       .hoverEvent(showText(join(separator(newline()),
                                                 text("/money send <player> <amount>", GREEN),
@@ -99,7 +99,7 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
         }
         if (player.hasPermission("money.log")) {
             lines.add(empty());
-            lines.add(join(noSeparators(), VanillaItems.WRITABLE_BOOK, text(" Log", BLUE))
+            lines.add(textOfChildren(VanillaItems.WRITABLE_BOOK, text(" Log", BLUE))
                       .clickEvent(runCommand("/money log"))
                       .hoverEvent(showText(join(separator(newline()),
                                                 text("/money log", BLUE),
@@ -108,7 +108,7 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
         }
         if (player.hasPermission("money.top")) {
             lines.add(empty());
-            lines.add(join(noSeparators(), Mytems.GOLDEN_CUP, text(" Top", DARK_AQUA))
+            lines.add(textOfChildren(Mytems.GOLDEN_CUP, text(" Top", DARK_AQUA))
                       .clickEvent(runCommand("/money top"))
                       .hoverEvent(showText(join(separator(newline()),
                                                 text("/money top", AQUA),
@@ -154,7 +154,7 @@ public final class MoneyCommand extends AbstractCommand<MoneyPlugin> {
                     money = row.getMoney();
                 }
                 page.add(join(separator(newline()),
-                              join(noSeparators(), text(subscript("" + rank), DARK_GRAY), text(PlayerCache.nameForUuid(row.getOwner()))),
+                              textOfChildren(text(subscript("" + rank), DARK_GRAY), text(PlayerCache.nameForUuid(row.getOwner()))),
                               bookmarked(BOOKMARK, Coin.format(row.getMoney())))
                          .hoverEvent(showText(join(separator(newline()),
                                                    join(separator(space()), Glyph.toComponent("" + rank),

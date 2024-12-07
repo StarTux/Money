@@ -58,6 +58,7 @@ public final class MoneyPlugin extends JavaPlugin {
             createCache(player);
         }
         pruneLogs();
+        new MenuListener().enable();
     }
 
     private void pruneLogs() {
